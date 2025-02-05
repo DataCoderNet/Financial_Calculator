@@ -1,10 +1,13 @@
 <template>
-  <div class="calculator-display" :class="{ error: hasError }">
-    <div class="display-content">
-      {{ displayValue || '0' }}
-    </div>
-    <div v-if="hasError" class="error-message">
-      {{ error }}
+  <div class="calculator-display">
+    <div v-if="error" class="error-message">{{ error }}</div>
+    <div v-else class="display-container">
+      <div v-if="description" class="input-description">
+        {{ description }}
+      </div>
+      <div class="display-value" :class="{ 'with-description': description }">
+        {{ formatValue(value) }}
+      </div>
     </div>
   </div>
 </template>
@@ -13,24 +16,26 @@
 export default {
   name: 'CalculatorDisplay',
   props: {
-    // Value to display
     value: {
-      type: [Number, String],
-      default: '0'
+      type: String,
+      required: true
     },
-    // Error message (if any)
     error: {
+      type: String,
+      default: ''
+    },
+    description: {
       type: String,
       default: ''
     }
   },
-  computed: {
-    hasError() {
-      return Boolean(this.error)
-    },
-    displayValue() {
-      if (this.hasError) return 'Error'
-      return this.value
+  methods: {
+    formatValue(val) {
+      // Remove trailing zeros after decimal point
+      if (val.includes('.')) {
+        return Number(val).toString()
+      }
+      return val
     }
   }
 }
@@ -38,43 +43,44 @@ export default {
 
 <style scoped>
 .calculator-display {
-  width: 100%;
-  min-height: 65px; /* Reduced from 80px */
-  background-color: #424242;
-  border-radius: 8px; /* Reduced from 10px */
-  margin-bottom: 15px; /* Reduced from 20px */
-  padding: 8px 15px; /* Reduced from 10px 20px */
-  box-sizing: border-box;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  text-align: right;
+  min-height: 60px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  overflow: hidden;
 }
 
-.display-content {
-  color: white;
-  font-size: 2rem; /* Reduced from 2.5rem */
-  font-family: 'Digital', monospace;
-  text-align: right;
-  white-space: nowrap;
+.display-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.display-value {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.display-value.with-description {
+  font-size: 1.5rem;
+}
+
+.input-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: left;
 }
 
 .error-message {
-  color: #ff8a80;
-  font-size: 0.875rem; /* Reduced from 1rem */
-  text-align: right;
-  margin-top: 4px; /* Reduced from 5px */
-}
-
-.calculator-display.error .display-content {
-  color: #ff8a80;
-}
-
-/* Digital font effect */
-@font-face {
-  font-family: 'Digital';
-  src: local('Courier New');
+  color: #dc3545;
+  font-size: 1rem;
 }
 </style>

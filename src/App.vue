@@ -3,6 +3,7 @@
     <CalculatorDisplay
       :value="displayValue"
       :error="error"
+      :description="inputDescription"
     />
     <div class="calculator-grid">
       <!-- First row -->
@@ -31,12 +32,12 @@
 
       <!-- Fifth row -->
       <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
-      <CalculatorButton label="." type="digit" @click="handleInput('.')" />
+      <CalculatorButton label="." type="digit" @click="appendDecimal" />
       <CalculatorButton label="=" type="operator" @click="calculate" />
     </div>
     <!-- FIN menu at the bottom -->
     <div class="fin-section">
-      <FinButtonMenu ref="finMenu" @parameter-input="handleParameterInput" />
+      <FinButtonMenu ref="finMenu" @input-ready="handleParameterInput" />
     </div>
   </div>
 </template>
@@ -64,37 +65,33 @@ export default {
       error: '',
       // Financial calculation state
       isFinancialMode: false,
-      currentFinancialFunction: null,
-      financialParameters: {}
+      currentParameter: null,
+      inputDescription: '',
     }
   },
   methods: {
     handleInput(value) {
       if (this.isFinancialMode) {
-        // If in financial mode, pass input to FIN menu
-        this.$refs.finMenu.handleCalculatorInput(value)
+        // If in financial mode, use the current display value
+        const newValue = this.displayValue === '0' ? value : this.displayValue + value
+        this.displayValue = newValue
+        this.$refs.finMenu.handleCalculatorInput(newValue)
         return
       }
 
       // Normal calculator input handling
-      if (value === '.') {
-        this.appendDecimal()
-      } else {
-        this.appendDigit(value)
-      }
+      this.appendDigit(value)
     },
     clear() {
       if (this.isFinancialMode) {
-        // If in financial mode, reset financial state
-        this.isFinancialMode = false
-        this.currentFinancialFunction = null
-        this.financialParameters = {}
+        this.$refs.finMenu.handleCalculatorInput('0')
       }
       this.displayValue = '0'
       this.previousValue = null
       this.operator = null
       this.waitingForSecondOperand = false
       this.error = ''
+      this.inputDescription = ''
     },
     appendDigit(digit) {
       if (this.waitingForSecondOperand) {
@@ -115,23 +112,28 @@ export default {
       }
     },
     toggleSign() {
-      this.displayValue = String(-parseFloat(this.displayValue))
+      const value = parseFloat(this.displayValue) * -1
+      this.displayValue = String(value)
+      if (this.isFinancialMode) {
+        this.$refs.finMenu.handleCalculatorInput(this.displayValue)
+      }
     },
     percentage() {
-      const currentValue = parseFloat(this.displayValue)
-      
-      if (this.operator && this.previousValue !== null) {
-        // If we're in the middle of an operation, calculate percentage of the first number
-        const percentValue = (currentValue / 100) * this.previousValue
-        this.displayValue = String(percentValue)
-      } else {
-        // If no operation is in progress, just convert to percentage
-        this.displayValue = String(currentValue / 100)
+      const value = parseFloat(this.displayValue) / 100
+      this.displayValue = String(value)
+      if (this.isFinancialMode) {
+        this.$refs.finMenu.handleCalculatorInput(this.displayValue)
       }
-      
-      this.error = ''
     },
     setOperator(nextOperator) {
+      if (this.isFinancialMode) {
+        // In financial mode, = is used to confirm parameter input
+        if (nextOperator === '+' || nextOperator === '-') {
+          this.toggleSign()
+        }
+        return
+      }
+
       const value = parseFloat(this.displayValue)
       
       if (this.previousValue === null) {
@@ -193,38 +195,23 @@ export default {
       this.operator = null
       this.waitingForSecondOperand = false
     },
-    // Financial calculation methods
-    handleParameterInput(paramData) {
+    handleParameterInput(param) {
       this.isFinancialMode = true
-      this.currentFinancialFunction = paramData
-      this.displayValue = '0'
-      this.waitingForSecondOperand = false
+      this.currentParameter = param
+      this.displayValue = param.currentValue || '0'
+      this.inputDescription = `Enter ${param.key.toUpperCase()}`
     },
     async calculateFinancial() {
-      if (!this.currentFinancialFunction) return
-
       try {
-        const response = await fetch(`${API_BASE_URL}/fin/tvm/${this.currentFinancialFunction.key}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(this.financialParameters)
-        })
-
-        if (!response.ok) {
-          const error = await response.json()
-          throw new Error(error.detail || 'Calculation failed')
+        const result = await this.$refs.finMenu.calculate()
+        if (result !== null) {
+          this.displayValue = String(result)
+          this.isFinancialMode = false
+          this.currentParameter = null
+          this.inputDescription = ''
         }
-
-        const result = await response.json()
-        this.displayValue = String(result.value)
-        this.isFinancialMode = false
-        this.currentFinancialFunction = null
-        this.financialParameters = {}
       } catch (error) {
         this.error = error.message
-        console.error('Financial calculation error:', error)
       }
     }
   }
@@ -255,6 +242,7 @@ body {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 280px;
   margin: 0 auto;
+  position: relative;
 }
 
 .calculator-grid {
@@ -272,5 +260,12 @@ body {
   margin-top: 12px;
   display: flex;
   justify-content: center;
+}
+
+.input-description {
+  font-size: 0.8rem;
+  color: #666;
+  text-align: left;
+  margin-left: 8px;
 }
 </style>

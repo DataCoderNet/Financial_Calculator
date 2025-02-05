@@ -30,21 +30,11 @@
       <!-- TVM Menu -->
       <TVMMenu
         v-else-if="currentView === 'tvm'"
+        :current-parameter="currentParameter"
+        :parameter-values="parameterValues"
         @back="currentView = 'main'"
-        @select-function="selectFunction"
+        @select-parameter="selectParameter"
       />
-
-      <!-- Parameter Input -->
-      <div v-if="showParameterInput" class="parameter-input">
-        <div class="parameter-header">
-          <h4>{{ currentFunction.label }}: {{ currentParameter.label }}</h4>
-          <button class="close-button" @click="cancelInput">&times;</button>
-        </div>
-        <div class="parameter-value">{{ parameterValue || '0' }}</div>
-        <div class="parameter-description">
-          {{ currentParameter.description }}
-        </div>
-      </div>
     </div>
   </div>
 </template>
@@ -59,14 +49,21 @@ export default {
     CalculatorButton,
     TVMMenu
   },
+  emits: ['input-ready'],
   data() {
     return {
       isMenuOpen: false,
       currentView: 'main',
-      currentFunction: null,
       currentParameter: null,
-      parameterValue: '',
-      parameters: {},
+      parameterValues: {
+        n: '',
+        i: '',
+        pv: '',
+        pmt: '',
+        fv: '',
+        pyr: '12',
+        end: true
+      },
       categories: [
         { key: 'tvm', label: 'TVM', description: 'Time Value of Money' },
         { key: 'icnv', label: 'ICNV', description: 'Interest Conversion' },
@@ -75,11 +72,6 @@ export default {
         { key: 'deprc', label: 'DEPRC', description: 'Depreciation' },
         { key: 'bsch', label: 'BSCH', description: 'Business Schedules' }
       ]
-    }
-  },
-  computed: {
-    showParameterInput() {
-      return this.currentFunction && this.currentParameter
     }
   },
   methods: {
@@ -95,53 +87,55 @@ export default {
     },
     resetState() {
       this.currentView = 'main'
-      this.currentFunction = null
       this.currentParameter = null
-      this.parameterValue = ''
-      this.parameters = {}
+      this.parameterValues = {
+        n: '',
+        i: '',
+        pv: '',
+        pmt: '',
+        fv: '',
+        pyr: '12',
+        end: true
+      }
     },
     selectCategory(category) {
       this.currentView = category.key
     },
-    selectFunction(func) {
-      this.currentFunction = func
-      // For TVM functions, define the required parameters
-      if (func.type === 'tvm') {
-        this.parameters = {
-          n: { label: 'N', description: 'Number of periods' },
-          i: { label: 'I%YR', description: 'Annual interest rate (%)' },
-          pv: { label: 'PV', description: 'Present value' },
-          pmt: { label: 'PMT', description: 'Payment amount' },
-          fv: { label: 'FV', description: 'Future value' }
-        }
-        // Start with the first parameter
-        this.currentParameter = this.parameters[Object.keys(this.parameters)[0]]
-      }
+    selectParameter(param) {
+      this.currentParameter = param
+      this.$emit('input-ready', {
+        key: param.key,
+        currentValue: this.parameterValues[param.key] || ''
+      })
     },
     handleCalculatorInput(value) {
-      if (this.showParameterInput) {
-        this.parameterValue = value
+      if (this.currentParameter) {
+        // Update the parameter value
+        this.parameterValues[this.currentParameter.key] = value
       }
     },
-    cancelInput() {
-      this.currentFunction = null
-      this.currentParameter = null
-      this.parameterValue = ''
-    },
-    async calculateResult() {
+    async calculate() {
+      if (!this.currentView === 'tvm') return
+
       try {
-        // TODO: Call the appropriate API endpoint based on currentFunction
-        const result = await fetch(`/api/fin/tvm/${this.currentFunction.key}`, {
+        const response = await fetch('http://localhost:8000/api/fin/tvm/pv', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(this.parameters)
+          body: JSON.stringify(this.parameterValues)
         })
-        const data = await result.json()
-        // TODO: Display result
+
+        if (!response.ok) {
+          throw new Error('Calculation failed')
+        }
+
+        const result = await response.json()
+        this.closeMenu()
+        return result.value
       } catch (error) {
-        console.error('Calculation error:', error)
+        console.error('Failed to calculate:', error)
+        return null
       }
     }
   }
@@ -157,9 +151,9 @@ export default {
 
 .menu-content {
   position: absolute;
-  top: 100%;
-  right: 0;
-  margin-top: 5px;
+  left: calc(100% + 10px);  /* Position to the right with 10px gap */
+  top: 0;
+  margin-top: 0;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
@@ -198,38 +192,5 @@ export default {
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
   padding: 10px;
-}
-
-.parameter-input {
-  padding: 15px;
-  border-top: 1px solid #eee;
-}
-
-.parameter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-.parameter-header h4 {
-  margin: 0;
-  font-size: 1rem;
-  color: #333;
-}
-
-.parameter-value {
-  font-size: 1.5rem;
-  text-align: right;
-  padding: 10px;
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  margin-bottom: 10px;
-}
-
-.parameter-description {
-  font-size: 0.9rem;
-  color: #666;
-  text-align: center;
 }
 </style>

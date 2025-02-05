@@ -4,47 +4,64 @@
       <h3>Time Value of Money</h3>
       <button class="back-button" @click="$emit('back')">&larr; Back</button>
     </div>
-    <div class="function-grid">
-      <CalculatorButton
-        v-for="func in tvmFunctions"
+
+    <div class="parameters-grid">
+      <div 
+        v-for="func in tvmFunctions" 
         :key="func.key"
-        :label="func.label"
-        type="fin"
-        @click="selectFunction(func)"
-      />
+        :class="['parameter-item', { active: isActive(func) }]"
+        @click="selectParameter(func)"
+      >
+        <div class="param-label">{{ func.label }}</div>
+        <div class="param-value">{{ getParameterValue(func.key) }}</div>
+      </div>
+    </div>
+
+    <div v-if="currentParameter" class="parameter-info">
+      <div class="info-header">{{ currentParameter.label }}</div>
+      <div class="info-description">{{ currentParameter.description }}</div>
     </div>
   </div>
 </template>
 
 <script>
-import CalculatorButton from '../CalculatorButton.vue'
-
 export default {
   name: 'TVMMenu',
-  components: {
-    CalculatorButton
+  props: {
+    currentParameter: {
+      type: Object,
+      default: null
+    },
+    parameterValues: {
+      type: Object,
+      required: true
+    }
   },
   data() {
     return {
       tvmFunctions: [
-        { key: 'n', label: 'N', description: 'Number of periods' },
-        { key: 'i', label: 'I%YR', description: 'Annual interest rate' },
-        { key: 'pv', label: 'PV', description: 'Present value' },
-        { key: 'pmt', label: 'PMT', description: 'Payment amount' },
+        { key: 'n', label: 'N', description: 'Number of periods (years)' },
+        { key: 'i', label: 'I%YR', description: 'Annual interest rate (as percentage)' },
+        { key: 'pv', label: 'PV', description: 'Present value (negative for cash paid out)' },
+        { key: 'pmt', label: 'PMT', description: 'Payment amount per period' },
         { key: 'fv', label: 'FV', description: 'Future value' },
-        { key: 'pyr', label: 'P/YR', description: 'Payments per year' },
-        { key: 'end', label: 'END', description: 'Payment timing (End of period)' }
+        { key: 'pyr', label: 'P/YR', description: 'Payments per year (default: 12)' },
+        { key: 'end', label: 'END', description: 'Payment timing (END or BEG)' }
       ]
     }
   },
   methods: {
-    selectFunction(func) {
-      this.$emit('select-function', {
-        type: 'tvm',
-        function: func.key,
-        label: func.label,
-        description: func.description
-      })
+    selectParameter(func) {
+      this.$emit('select-parameter', func)
+    },
+    isActive(func) {
+      return this.currentParameter?.key === func.key
+    },
+    getParameterValue(key) {
+      if (key === 'end') {
+        return this.parameterValues[key] ? 'END' : 'BEG'
+      }
+      return this.parameterValues[key] || '0'
     }
   }
 }
@@ -56,7 +73,7 @@ export default {
   border-radius: 8px;
   padding: 15px;
   width: 100%;
-  max-width: 320px;
+  min-width: 280px;
 }
 
 .menu-header {
@@ -85,15 +102,55 @@ export default {
   color: #333;
 }
 
-.function-grid {
+.parameters-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 
-.function-grid :deep(.calculator-button) {
-  width: 100%;
-  height: 40px;
-  font-size: 1rem;
+.parameter-item {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.parameter-item:hover {
+  border-color: #007bff;
+}
+
+.parameter-item.active {
+  background-color: #007bff;
+  border-color: #007bff;
+  color: white;
+}
+
+.param-label {
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.param-value {
+  font-size: 1.1rem;
+  margin-top: 4px;
+}
+
+.parameter-info {
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.info-header {
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.info-description {
+  font-size: 0.9rem;
+  color: #666;
 }
 </style>
