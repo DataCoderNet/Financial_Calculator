@@ -19,7 +19,7 @@
       </div>
       <div class="calculator-grid">
         <!-- First row -->
-        <CalculatorButton label="C" type="function" @click="clear" />
+        <CalculatorButton label="C" type="function" @click="clearAll" />
         <CalculatorButton label="±" type="function" @click="toggleSign" />
         <CalculatorButton label="%" type="function" @click="percentage" />
         <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
@@ -90,10 +90,8 @@ export default {
       // Normal calculator input handling
       this.appendDigit(value)
     },
-    clear() {
-      if (this.isFinancialMode) {
-        this.displayValue = '0'
-      }
+    clearAll() {
+      // Reset calculator display
       this.displayValue = '0'
       this.previousValue = null
       this.operator = null
@@ -101,6 +99,15 @@ export default {
       this.error = ''
       this.inputDescription = ''
       this.calculatedParameter = ''
+      
+      // Reset financial mode state
+      this.isFinancialMode = false
+      this.currentParameter = null
+
+      // Reset all TVM parameters
+      if (this.$refs.finMenu) {
+        this.$refs.finMenu.resetState()
+      }
     },
     appendDigit(digit) {
       if (this.waitingForSecondOperand) {
