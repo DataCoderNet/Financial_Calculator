@@ -19,7 +19,8 @@
       </div>
     </div>
 
-    <div class="function-info">
+    <!-- Calculate Button -->
+    <div class="calculate-section">
       <div class="sign-convention">
         <small>Cash Flow Convention:</small>
         <ul>
@@ -27,10 +28,13 @@
           <li>Money paid out (PV, PMT): negative (-)</li>
         </ul>
       </div>
-      <div v-if="currentParameter" class="parameter-info">
-        <div class="info-header">{{ currentParameter.label }}</div>
-        <div class="info-description">{{ currentParameter.description }}</div>
-      </div>
+      <button 
+        class="calculate-button"
+        @click="requestCalculation"
+        :disabled="!canCalculate"
+      >
+        Calculate
+      </button>
     </div>
   </div>
 </template>
@@ -61,40 +65,21 @@ export default {
       ]
     }
   },
+  computed: {
+    filledParameters() {
+      return Object.entries(this.parameterValues)
+        .filter(([key]) => key !== 'pyr' && key !== 'end')
+        .filter(([, value]) => value !== '' && value !== undefined)
+        .length
+    },
+    canCalculate() {
+      // Need at least 3 parameters filled to calculate the 4th
+      return this.filledParameters >= 3
+    }
+  },
   methods: {
     handleParameterClick(func) {
-      // Check if this parameter should be calculated
-      if (this.canCalculateParameter(func)) {
-        this.$emit('calculate-parameter', func)
-      } else {
-        this.$emit('select-parameter', func)
-      }
-    },
-    canCalculateParameter(func) {
-      const params = this.parameterValues
-      
-      // Define required parameters for each calculation
-      const requiredParams = {
-        pv: ['n', 'i', 'fv'],
-        fv: ['n', 'i', 'pv'],
-        n: ['pv', 'i', 'fv'],
-        i: ['n', 'pv', 'fv'],
-        pmt: ['n', 'i', 'pv', 'fv']
-      }
-      
-      const required = requiredParams[func.key]
-      if (!required) return false
-
-      // Check if all required parameters except the current one are filled
-      const hasRequiredParams = required.every(param => 
-        !!params[param] && params[param] !== ''
-      )
-      
-      // Check if current parameter is empty
-      const isCurrentEmpty = !params[func.key] || params[func.key] === ''
-
-      // Return true if we have all required params and current is empty
-      return hasRequiredParams && isCurrentEmpty
+      this.$emit('select-parameter', func)
     },
     isActive(func) {
       return this.currentParameter?.key === func.key
@@ -106,22 +91,10 @@ export default {
       }
       if (!value && value !== 0) return '?'
       return value.toString()
-    }
-  },
-  watch: {
-    // Watch for changes in parameter values
-    parameterValues: {
-      deep: true,
-      handler(newValues) {
-        // Find any parameter that can be calculated
-        const calculableParam = this.tvmFunctions.find(func => 
-          this.canCalculateParameter(func)
-        )
-        
-        if (calculableParam) {
-          this.$emit('calculate-parameter', calculableParam)
-        }
-      }
+    },
+    requestCalculation() {
+      if (!this.canCalculate) return
+      this.$emit('calculation-request')
     }
   }
 }
@@ -199,17 +172,19 @@ export default {
   font-family: monospace;
 }
 
-.function-info {
+.calculate-section {
   margin-top: 15px;
-  padding: 10px;
+  padding: 15px;
   background-color: #e9ecef;
   border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
 .sign-convention {
   font-size: 0.85rem;
   color: #666;
-  margin-bottom: 10px;
 }
 
 .sign-convention ul {
@@ -221,19 +196,26 @@ export default {
   margin: 2px 0;
 }
 
-.parameter-info {
-  border-top: 1px solid #dee2e6;
-  padding-top: 10px;
-  margin-top: 10px;
+.calculate-button {
+  width: 100%;
+  padding: 10px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
 }
 
-.info-header {
-  font-weight: bold;
-  margin-bottom: 5px;
+.calculate-button:hover:not(:disabled) {
+  background-color: #218838;
 }
 
-.info-description {
-  font-size: 0.9rem;
-  color: #666;
+.calculate-button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.65;
 }
 </style>

@@ -12,9 +12,9 @@
       <div class="fin-section">
         <FinButtonMenu 
           ref="finMenu" 
-          @input-ready="handleParameterInput"
+          @assign-value="handleAssignValue"
           @parameter-update="updateFinParameters"
-          @calculation-triggered="handleCalculation"
+          @calculation-request="calculateFinancial"
         />
       </div>
       <div class="calculator-grid">
@@ -81,10 +81,9 @@ export default {
   methods: {
     handleInput(value) {
       if (this.isFinancialMode) {
-        // If in financial mode, use the current display value
+        // Always update display value in financial mode
         const newValue = this.displayValue === '0' ? value : this.displayValue + value
         this.displayValue = newValue
-        this.$refs.finMenu.handleCalculatorInput(newValue)
         return
       }
 
@@ -93,7 +92,7 @@ export default {
     },
     clear() {
       if (this.isFinancialMode) {
-        this.$refs.finMenu.handleCalculatorInput('0')
+        this.displayValue = '0'
       }
       this.displayValue = '0'
       this.previousValue = null
@@ -124,20 +123,14 @@ export default {
     toggleSign() {
       const value = parseFloat(this.displayValue) * -1
       this.displayValue = String(value)
-      if (this.isFinancialMode) {
-        this.$refs.finMenu.handleCalculatorInput(this.displayValue)
-      }
     },
     percentage() {
       const value = parseFloat(this.displayValue) / 100
       this.displayValue = String(value)
-      if (this.isFinancialMode) {
-        this.$refs.finMenu.handleCalculatorInput(this.displayValue)
-      }
     },
     setOperator(nextOperator) {
       if (this.isFinancialMode) {
-        // In financial mode, = is used to confirm parameter input
+        // In financial mode, + and - are used for sign changes
         if (nextOperator === '+' || nextOperator === '-') {
           this.toggleSign()
         }
@@ -205,20 +198,28 @@ export default {
       this.operator = null
       this.waitingForSecondOperand = false
     },
-    handleParameterInput(param) {
+    handleAssignValue(param) {
+      // Assign the current display value to the selected parameter
       this.isFinancialMode = true
-      this.currentParameter = param
-      this.displayValue = param.currentValue || '0'
-      this.inputDescription = `Enter ${param.key.toUpperCase()}`
-      this.calculatedParameter = ''
+      this.$refs.finMenu.assignParameterValue(param, this.displayValue)
+      this.displayValue = '0'  // Reset display for next input
+      this.inputDescription = `${param.key.toUpperCase()} = ${this.displayValue}`
     },
     updateFinParameters(params) {
       this.finParameters = params
     },
-    handleCalculation() {
-      this.calculatedParameter = this.currentParameter.key.toUpperCase()
-      this.displayValue = this.finParameters[this.currentParameter.key]
-      this.inputDescription = `${this.calculatedParameter}`
+    async calculateFinancial() {
+      try {
+        const result = await this.$refs.finMenu.calculate()
+        if (result !== null) {
+          this.displayValue = String(result.value)
+          this.calculatedParameter = result.parameter.toUpperCase()
+          this.inputDescription = `${this.calculatedParameter}`
+          this.error = ''
+        }
+      } catch (error) {
+        this.error = error.message
+      }
     }
   }
 }

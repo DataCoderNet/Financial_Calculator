@@ -33,8 +33,8 @@
         :current-parameter="currentParameter"
         :parameter-values="parameterValues"
         @back="currentView = 'main'"
-        @select-parameter="selectParameter"
-        @calculate-parameter="calculateParameter"
+        @select-parameter="assignToParameter"
+        @calculation-request="handleCalculate"
       />
     </div>
   </div>
@@ -50,7 +50,7 @@ export default {
     CalculatorButton,
     TVMMenu
   },
-  emits: ['input-ready', 'parameter-update', 'calculation-triggered'],
+  emits: ['assign-value', 'parameter-update', 'calculation-request'],
   data() {
     return {
       isMenuOpen: false,
@@ -104,34 +104,39 @@ export default {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
     },
-    selectParameter(param) {
-      this.currentParameter = param
-      this.$emit('input-ready', {
-        key: param.key,
-        currentValue: this.parameterValues[param.key] || ''
-      })
+    assignToParameter(param) {
+      this.$emit('assign-value', param)
     },
-    async calculateParameter(param) {
-      this.currentParameter = param
-      const result = await this.calculate()
-      if (result !== null) {
-        this.parameterValues[param.key] = String(result)
-        this.$emit('parameter-update', this.parameterValues)
-        this.$emit('calculation-triggered')
-        
-        // Update the display with the result
-        this.$emit('input-ready', {
-          key: param.key,
-          currentValue: String(result)
-        })
-      }
+    assignParameterValue(param, value) {
+      this.parameterValues[param.key] = value
+      this.$emit('parameter-update', this.parameterValues)
     },
-    handleCalculatorInput(value) {
-      if (this.currentParameter) {
-        // Update the parameter value
-        this.parameterValues[this.currentParameter.key] = value
-        this.$emit('parameter-update', this.parameterValues)
+    handleCalculate() {
+      // Find which parameter is missing
+      const missingParam = this.findMissingParameter()
+      if (!missingParam) return
+
+      this.currentParameter = {
+        key: missingParam,
+        label: this.getParameterLabel(missingParam)
       }
+      this.calculate()
+    },
+    getParameterLabel(key) {
+      const labels = {
+        n: 'N',
+        i: 'I%YR',
+        pv: 'PV',
+        pmt: 'PMT',
+        fv: 'FV'
+      }
+      return labels[key] || key.toUpperCase()
+    },
+    findMissingParameter() {
+      const requiredParams = ['n', 'i', 'pv', 'fv']
+      return requiredParams.find(param => 
+        !this.parameterValues[param] || this.parameterValues[param] === ''
+      )
     },
     async calculate() {
       if (this.currentView !== 'tvm') return null
@@ -146,7 +151,7 @@ export default {
       if (params.i) params.i = Number(params.i)
       if (params.n) params.n = Number(params.n)
 
-      // Determine which calculation to perform based on the current parameter
+      // Determine which calculation to perform based on the missing parameter
       const endpoint = this.currentParameter.key
 
       try {
@@ -170,7 +175,14 @@ export default {
           displayValue = -displayValue
         }
 
-        return displayValue
+        // Store the calculated value
+        this.parameterValues[endpoint] = String(displayValue)
+        this.$emit('parameter-update', this.parameterValues)
+
+        return {
+          value: displayValue,
+          parameter: endpoint
+        }
       } catch (error) {
         console.error('Failed to calculate:', error)
         return null
