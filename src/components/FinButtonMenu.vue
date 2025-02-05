@@ -32,7 +32,7 @@
         v-else-if="currentView === 'tvm'"
         :current-parameter="currentParameter"
         :parameter-values="parameterValues"
-        @back="currentView = 'main'"
+        @back="goBack"
         @select-parameter="assignToParameter"
         @calculation-request="handleCalculate"
       />
@@ -78,9 +78,12 @@ export default {
   methods: {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
-      this.$emit('menu-state', this.isMenuOpen)
       if (!this.isMenuOpen) {
         this.resetState()
+      }
+      // Don't set financial mode when just opening the menu
+      if (!this.isMenuOpen) {
+        this.$emit('menu-state', false)
       }
     },
     closeMenu() {
@@ -105,7 +108,13 @@ export default {
     selectCategory(category) {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
+      // Only set financial mode when selecting a specific function
       this.$emit('menu-state', true)
+    },
+    goBack() {
+      this.currentView = 'main'
+      // Return to normal display when going back to main menu
+      this.$emit('menu-state', false)
     },
     assignToParameter(param) {
       this.$emit('assign-value', param)
