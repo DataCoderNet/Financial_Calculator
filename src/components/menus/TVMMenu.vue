@@ -10,7 +10,7 @@
         v-for="func in tvmFunctions" 
         :key="func.key"
         :class="['parameter-item', { active: isActive(func) }]"
-        @click="selectParameter(func)"
+        @click="handleParameterClick(func)"
       >
         <div class="param-label">{{ func.label }}</div>
         <div class="param-value">
@@ -62,8 +62,36 @@ export default {
     }
   },
   methods: {
-    selectParameter(func) {
-      this.$emit('select-parameter', func)
+    handleParameterClick(func) {
+      // If clicking a parameter that needs to be calculated
+      if (this.shouldCalculateParameter(func)) {
+        this.$emit('calculate-parameter', func)
+      } else {
+        this.$emit('select-parameter', func)
+      }
+    },
+    shouldCalculateParameter(func) {
+      // Return true if:
+      // 1. This parameter doesn't have a value yet
+      // 2. We have enough other parameters to calculate it
+      const params = this.parameterValues
+      const hasValue = params[func.key] !== '' && params[func.key] !== undefined
+
+      if (hasValue) return false
+
+      // Check if we have enough parameters to calculate
+      const requiredParams = {
+        pv: ['n', 'i', 'fv'],
+        fv: ['n', 'i', 'pv'],
+        n: ['pv', 'i', 'fv'],
+        i: ['n', 'pv', 'fv'],
+        pmt: ['n', 'i', 'pv', 'fv']
+      }
+
+      const required = requiredParams[func.key] || []
+      return required.every(param => 
+        params[param] !== '' && params[param] !== undefined
+      )
     },
     isActive(func) {
       return this.currentParameter?.key === func.key

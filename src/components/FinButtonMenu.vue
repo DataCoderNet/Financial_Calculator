@@ -34,6 +34,7 @@
         :parameter-values="parameterValues"
         @back="currentView = 'main'"
         @select-parameter="selectParameter"
+        @calculate-parameter="calculateParameter"
       />
     </div>
   </div>
@@ -104,19 +105,20 @@ export default {
       this.$emit('parameter-update', this.parameterValues)
     },
     selectParameter(param) {
-      // If we're selecting a parameter that already has a value,
-      // and it's not the current parameter, trigger calculation
-      if (this.parameterValues[param.key] && this.currentParameter?.key !== param.key) {
-        this.currentParameter = param
-        this.$emit('calculation-triggered')
-        return
-      }
-      
       this.currentParameter = param
       this.$emit('input-ready', {
         key: param.key,
         currentValue: this.parameterValues[param.key] || ''
       })
+    },
+    async calculateParameter(param) {
+      this.currentParameter = param
+      this.$emit('calculation-triggered')
+      const result = await this.calculate()
+      if (result !== null) {
+        this.parameterValues[param.key] = String(result)
+        this.$emit('parameter-update', this.parameterValues)
+      }
     },
     handleCalculatorInput(value) {
       if (this.currentParameter) {
@@ -162,10 +164,6 @@ export default {
           displayValue = -displayValue
         }
 
-        // Store the result in parameterValues
-        this.parameterValues[endpoint] = String(displayValue)
-        this.$emit('parameter-update', this.parameterValues)
-        
         return displayValue
       } catch (error) {
         console.error('Failed to calculate:', error)
@@ -184,9 +182,10 @@ export default {
 }
 
 .menu-content {
-  position: absolute;
-  top: -20px; /* Align with calculator top */
-  left: 360px; /* Position after calculator */
+  position: fixed;
+  top: 2rem; /* Match body padding */
+  right: calc(50% - 160px); /* Center calculator width (320/2) */
+  margin-right: -360px; /* Position to the right of calculator */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
