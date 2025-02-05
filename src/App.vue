@@ -7,6 +7,15 @@
         :description="inputDescription"
         :parameters="finParameters"
       />
+      <!-- Move FIN button above calculator grid -->
+      <div class="fin-section">
+        <FinButtonMenu 
+          ref="finMenu" 
+          @input-ready="handleParameterInput"
+          @parameter-update="updateFinParameters"
+          @calculate="handleCalculate"
+        />
+      </div>
       <div class="calculator-grid">
         <!-- First row -->
         <CalculatorButton label="C" type="function" @click="clear" />
@@ -36,14 +45,6 @@
         <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
         <CalculatorButton label="." type="digit" @click="appendDecimal" />
         <CalculatorButton label="=" type="operator" @click="calculate" />
-      </div>
-      <!-- FIN button at the bottom -->
-      <div class="fin-section">
-        <FinButtonMenu 
-          ref="finMenu" 
-          @input-ready="handleParameterInput"
-          @parameter-update="updateFinParameters"
-        />
       </div>
     </div>
   </div>
@@ -212,17 +213,12 @@ export default {
     updateFinParameters(params) {
       this.finParameters = params
     },
-    async calculateFinancial() {
-      try {
-        const result = await this.$refs.finMenu.calculate()
-        if (result !== null) {
-          this.displayValue = String(result)
-          this.isFinancialMode = false
-          this.currentParameter = null
-          this.inputDescription = ''
-        }
-      } catch (error) {
-        this.error = error.message
+    async handleCalculate(result) {
+      if (result !== null) {
+        this.displayValue = String(result)
+        this.isFinancialMode = false
+        this.currentParameter = null
+        this.inputDescription = ''
       }
     }
   }
@@ -245,11 +241,9 @@ body {
 }
 
 .calculator-container {
-  display: flex;
-  justify-content: center;
+  display: inline-flex;
   gap: 20px;
   margin: 0 auto;
-  max-width: 800px;
   align-items: flex-start;
 }
 
@@ -259,6 +253,8 @@ body {
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .calculator-grid {
@@ -273,8 +269,8 @@ body {
 }
 
 .fin-section {
-  margin-top: 12px;
+  margin-bottom: 12px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 </style>

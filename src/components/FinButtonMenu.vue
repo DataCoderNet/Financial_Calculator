@@ -9,7 +9,7 @@
     />
 
     <!-- Menu Content -->
-    <div v-if="isMenuOpen" class="menu-content">
+    <div v-if="isMenuOpen" class="menu-overlay">
       <!-- Main Categories Menu -->
       <div v-if="currentView === 'main'" class="main-menu">
         <div class="menu-header">
@@ -49,7 +49,7 @@ export default {
     CalculatorButton,
     TVMMenu
   },
-  emits: ['input-ready', 'parameter-update'],
+  emits: ['input-ready', 'parameter-update', 'calculate'],
   data() {
     return {
       isMenuOpen: false,
@@ -104,6 +104,12 @@ export default {
       this.$emit('parameter-update', this.parameterValues)
     },
     selectParameter(param) {
+      // If clicking the same parameter that's already filled, perform calculation
+      if (this.currentParameter?.key === param.key && this.parameterValues[param.key]) {
+        this.calculate()
+        return
+      }
+      
       this.currentParameter = param
       this.$emit('input-ready', {
         key: param.key,
@@ -124,17 +130,14 @@ export default {
       const params = { ...this.parameterValues }
       
       // Convert values to numbers and apply sign convention
-      if (params.pv) params.pv = -Number(params.pv) // Money received is positive
+      if (params.pv) params.pv = -Number(params.pv) // Money paid out is negative
       if (params.fv) params.fv = Number(params.fv)  // Money received is positive
       if (params.pmt) params.pmt = -Number(params.pmt) // Payments made are negative
+      if (params.i) params.i = Number(params.i)
+      if (params.n) params.n = Number(params.n)
 
-      // Determine which calculation to perform based on the missing value
-      let endpoint = 'pv'
-      if (!params.pv) endpoint = 'pv'
-      else if (!params.fv) endpoint = 'fv'
-      else if (!params.pmt) endpoint = 'pmt'
-      else if (!params.n) endpoint = 'n'
-      else if (!params.i) endpoint = 'i'
+      // Determine which calculation to perform based on the current parameter
+      const endpoint = this.currentParameter.key
 
       try {
         const response = await fetch(`http://localhost:8000/api/fin/tvm/${endpoint}`, {
@@ -156,8 +159,13 @@ export default {
         if (endpoint === 'pv' || endpoint === 'pmt') {
           displayValue = -displayValue
         }
+
+        // Store the result in parameterValues
+        this.parameterValues[endpoint] = String(displayValue)
+        this.$emit('parameter-update', this.parameterValues)
         
-        this.closeMenu()
+        // Emit calculation result
+        this.$emit('calculate', displayValue)
         return displayValue
       } catch (error) {
         console.error('Failed to calculate:', error)
@@ -175,10 +183,10 @@ export default {
   z-index: 100;
 }
 
-.menu-content {
-  position: absolute;
-  left: calc(100% + 10px);
-  top: 0;
+.menu-overlay {
+  position: fixed;
+  left: 400px; /* Position after calculator width + gap */
+  top: 2rem; /* Match body padding */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
