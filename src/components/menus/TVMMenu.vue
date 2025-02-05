@@ -13,13 +13,24 @@
         @click="selectParameter(func)"
       >
         <div class="param-label">{{ func.label }}</div>
-        <div class="param-value">{{ getParameterValue(func.key) }}</div>
+        <div class="param-value">
+          {{ formatParameterValue(func.key) }}
+        </div>
       </div>
     </div>
 
-    <div v-if="currentParameter" class="parameter-info">
-      <div class="info-header">{{ currentParameter.label }}</div>
-      <div class="info-description">{{ currentParameter.description }}</div>
+    <div class="function-info">
+      <div class="sign-convention">
+        <small>Cash Flow Convention:</small>
+        <ul>
+          <li>Money received (FV): positive (+)</li>
+          <li>Money paid out (PV, PMT): negative (-)</li>
+        </ul>
+      </div>
+      <div v-if="currentParameter" class="parameter-info">
+        <div class="info-header">{{ currentParameter.label }}</div>
+        <div class="info-description">{{ currentParameter.description }}</div>
+      </div>
     </div>
   </div>
 </template>
@@ -43,8 +54,8 @@ export default {
         { key: 'n', label: 'N', description: 'Number of periods (years)' },
         { key: 'i', label: 'I%YR', description: 'Annual interest rate (as percentage)' },
         { key: 'pv', label: 'PV', description: 'Present value (negative for cash paid out)' },
-        { key: 'pmt', label: 'PMT', description: 'Payment amount per period' },
-        { key: 'fv', label: 'FV', description: 'Future value' },
+        { key: 'pmt', label: 'PMT', description: 'Payment amount (negative for cash paid out)' },
+        { key: 'fv', label: 'FV', description: 'Future value (positive for cash received)' },
         { key: 'pyr', label: 'P/YR', description: 'Payments per year (default: 12)' },
         { key: 'end', label: 'END', description: 'Payment timing (END or BEG)' }
       ]
@@ -57,11 +68,13 @@ export default {
     isActive(func) {
       return this.currentParameter?.key === func.key
     },
-    getParameterValue(key) {
+    formatParameterValue(key) {
+      const value = this.parameterValues[key]
       if (key === 'end') {
         return this.parameterValues[key] ? 'END' : 'BEG'
       }
-      return this.parameterValues[key] || '0'
+      if (!value && value !== 0) return '?'
+      return value.toString()
     }
   }
 }
@@ -106,6 +119,7 @@ export default {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 8px;
+  margin-bottom: 15px;
 }
 
 .parameter-item {
@@ -135,13 +149,35 @@ export default {
 .param-value {
   font-size: 1.1rem;
   margin-top: 4px;
+  font-family: monospace;
 }
 
-.parameter-info {
+.function-info {
   margin-top: 15px;
   padding: 10px;
   background-color: #e9ecef;
   border-radius: 4px;
+}
+
+.sign-convention {
+  font-size: 0.85rem;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+.sign-convention ul {
+  margin: 5px 0;
+  padding-left: 20px;
+}
+
+.sign-convention li {
+  margin: 2px 0;
+}
+
+.parameter-info {
+  border-top: 1px solid #dee2e6;
+  padding-top: 10px;
+  margin-top: 10px;
 }
 
 .info-header {

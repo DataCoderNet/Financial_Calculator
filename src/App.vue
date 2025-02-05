@@ -1,43 +1,50 @@
 <template>
-  <div class="calculator">
-    <CalculatorDisplay
-      :value="displayValue"
-      :error="error"
-      :description="inputDescription"
-    />
-    <div class="calculator-grid">
-      <!-- First row -->
-      <CalculatorButton label="C" type="function" @click="clear" />
-      <CalculatorButton label="±" type="function" @click="toggleSign" />
-      <CalculatorButton label="%" type="function" @click="percentage" />
-      <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
+  <div class="calculator-container">
+    <div class="calculator">
+      <CalculatorDisplay
+        :value="displayValue"
+        :error="error"
+        :description="inputDescription"
+        :parameters="finParameters"
+      />
+      <div class="calculator-grid">
+        <!-- First row -->
+        <CalculatorButton label="C" type="function" @click="clear" />
+        <CalculatorButton label="±" type="function" @click="toggleSign" />
+        <CalculatorButton label="%" type="function" @click="percentage" />
+        <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
 
-      <!-- Second row -->
-      <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
-      <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
-      <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
-      <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
+        <!-- Second row -->
+        <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
+        <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
+        <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
+        <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
 
-      <!-- Third row -->
-      <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
-      <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
-      <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
-      <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
+        <!-- Third row -->
+        <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
+        <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
+        <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
+        <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
 
-      <!-- Fourth row -->
-      <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
-      <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
-      <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
-      <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
+        <!-- Fourth row -->
+        <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
+        <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
+        <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
+        <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
 
-      <!-- Fifth row -->
-      <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
-      <CalculatorButton label="." type="digit" @click="appendDecimal" />
-      <CalculatorButton label="=" type="operator" @click="calculate" />
-    </div>
-    <!-- FIN menu at the bottom -->
-    <div class="fin-section">
-      <FinButtonMenu ref="finMenu" @input-ready="handleParameterInput" />
+        <!-- Fifth row -->
+        <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
+        <CalculatorButton label="." type="digit" @click="appendDecimal" />
+        <CalculatorButton label="=" type="operator" @click="calculate" />
+      </div>
+      <!-- FIN button at the bottom -->
+      <div class="fin-section">
+        <FinButtonMenu 
+          ref="finMenu" 
+          @input-ready="handleParameterInput"
+          @parameter-update="updateFinParameters"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -67,6 +74,7 @@ export default {
       isFinancialMode: false,
       currentParameter: null,
       inputDescription: '',
+      finParameters: null
     }
   },
   methods: {
@@ -201,6 +209,9 @@ export default {
       this.displayValue = param.currentValue || '0'
       this.inputDescription = `Enter ${param.key.toUpperCase()}`
     },
+    updateFinParameters(params) {
+      this.finParameters = params
+    },
     async calculateFinancial() {
       try {
         const result = await this.$refs.finMenu.calculate()
@@ -221,18 +232,25 @@ export default {
 <style>
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
   min-width: 320px;
   min-height: 100vh;
   background-color: #f0f0f0;
+  padding: 2rem;
 }
 
 #app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+}
+
+.calculator-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 0 auto;
+  max-width: 800px;
+  align-items: flex-start;
 }
 
 .calculator {
@@ -240,9 +258,7 @@ body {
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 280px;
-  margin: 0 auto;
-  position: relative;
+  width: 320px;
 }
 
 .calculator-grid {
@@ -260,12 +276,5 @@ body {
   margin-top: 12px;
   display: flex;
   justify-content: center;
-}
-
-.input-description {
-  font-size: 0.8rem;
-  color: #666;
-  text-align: left;
-  margin-left: 8px;
 }
 </style>

@@ -2,11 +2,26 @@
   <div class="calculator-display">
     <div v-if="error" class="error-message">{{ error }}</div>
     <div v-else class="display-container">
-      <div v-if="description" class="input-description">
-        {{ description }}
+      <!-- TVM Parameters display -->
+      <div v-if="parameters" class="parameters-display">
+        <div 
+          v-for="(value, key) in parameters" 
+          :key="key"
+          class="parameter-row"
+          :class="{ 'active': isActiveParameter(key) }"
+        >
+          <span class="param-label">{{ formatLabel(key) }}:</span>
+          <span class="param-value">{{ formatValue(value) }}</span>
+        </div>
       </div>
-      <div class="display-value" :class="{ 'with-description': description }">
-        {{ formatValue(value) }}
+      <!-- Current input display -->
+      <div class="current-input">
+        <div v-if="description" class="input-description">
+          {{ description }}
+        </div>
+        <div class="display-value" :class="{ 'with-description': description }">
+          {{ formatValue(value) }}
+        </div>
       </div>
     </div>
   </div>
@@ -27,15 +42,35 @@ export default {
     description: {
       type: String,
       default: ''
+    },
+    parameters: {
+      type: Object,
+      default: null
     }
   },
   methods: {
     formatValue(val) {
+      if (!val && val !== 0) return '0'
       // Remove trailing zeros after decimal point
-      if (val.includes('.')) {
+      if (String(val).includes('.')) {
         return Number(val).toString()
       }
-      return val
+      return String(val)
+    },
+    formatLabel(key) {
+      const labels = {
+        n: 'N',
+        i: 'I%YR',
+        pv: 'PV',
+        pmt: 'PMT',
+        fv: 'FV',
+        pyr: 'P/YR',
+        end: 'END'
+      }
+      return labels[key] || key.toUpperCase()
+    },
+    isActiveParameter(key) {
+      return this.description === `Enter ${key.toUpperCase()}`
     }
   }
 }
@@ -47,16 +82,59 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  text-align: right;
-  min-height: 60px;
+  min-height: 200px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
 }
 
 .display-container {
   display: flex;
   flex-direction: column;
+  height: 100%;
+}
+
+.parameters-display {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.parameter-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+}
+
+.parameter-row.active {
+  background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+.param-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.param-value {
+  font-size: 0.9rem;
+  color: #333;
+  font-family: monospace;
+}
+
+.current-input {
+  text-align: right;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
 .display-value {
@@ -66,10 +144,11 @@ export default {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-family: monospace;
 }
 
 .display-value.with-description {
-  font-size: 1.5rem;
+  font-size: 1.8rem;
 }
 
 .input-description {
@@ -82,5 +161,10 @@ export default {
 .error-message {
   color: #dc3545;
   font-size: 1rem;
+  padding: 10px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 </style>

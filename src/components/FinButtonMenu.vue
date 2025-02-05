@@ -49,7 +49,7 @@ export default {
     CalculatorButton,
     TVMMenu
   },
-  emits: ['input-ready'],
+  emits: ['input-ready', 'parameter-update'],
   data() {
     return {
       isMenuOpen: false,
@@ -97,9 +97,11 @@ export default {
         pyr: '12',
         end: true
       }
+      this.$emit('parameter-update', this.parameterValues)
     },
     selectCategory(category) {
       this.currentView = category.key
+      this.$emit('parameter-update', this.parameterValues)
     },
     selectParameter(param) {
       this.currentParameter = param
@@ -112,18 +114,35 @@ export default {
       if (this.currentParameter) {
         // Update the parameter value
         this.parameterValues[this.currentParameter.key] = value
+        this.$emit('parameter-update', this.parameterValues)
       }
     },
     async calculate() {
-      if (!this.currentView === 'tvm') return
+      if (this.currentView !== 'tvm') return null
+
+      // Apply cash flow sign convention
+      const params = { ...this.parameterValues }
+      
+      // Convert values to numbers and apply sign convention
+      if (params.pv) params.pv = -Number(params.pv) // Money received is positive
+      if (params.fv) params.fv = Number(params.fv)  // Money received is positive
+      if (params.pmt) params.pmt = -Number(params.pmt) // Payments made are negative
+
+      // Determine which calculation to perform based on the missing value
+      let endpoint = 'pv'
+      if (!params.pv) endpoint = 'pv'
+      else if (!params.fv) endpoint = 'fv'
+      else if (!params.pmt) endpoint = 'pmt'
+      else if (!params.n) endpoint = 'n'
+      else if (!params.i) endpoint = 'i'
 
       try {
-        const response = await fetch('http://localhost:8000/api/fin/tvm/pv', {
+        const response = await fetch(`http://localhost:8000/api/fin/tvm/${endpoint}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(this.parameterValues)
+          body: JSON.stringify(params)
         })
 
         if (!response.ok) {
@@ -131,8 +150,15 @@ export default {
         }
 
         const result = await response.json()
+        
+        // Reverse sign convention for display if needed
+        let displayValue = result.value
+        if (endpoint === 'pv' || endpoint === 'pmt') {
+          displayValue = -displayValue
+        }
+        
         this.closeMenu()
-        return result.value
+        return displayValue
       } catch (error) {
         console.error('Failed to calculate:', error)
         return null
@@ -151,9 +177,8 @@ export default {
 
 .menu-content {
   position: absolute;
-  left: calc(100% + 10px);  /* Position to the right with 10px gap */
+  left: calc(100% + 10px);
   top: 0;
-  margin-top: 0;
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
