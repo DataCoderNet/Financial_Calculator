@@ -145,29 +145,43 @@ export default {
       return labels[key] || key.toUpperCase()
     },
     findMissingParameter() {
-      const requiredParams = ['n', 'i', 'pv', 'fv']
+      const params = this.parameterValues
+      const requiredParams = ['n', 'i', 'pv', 'pmt', 'fv']
+      
+      // Count filled parameters
+      const filledParams = requiredParams.filter(param => 
+        params[param] !== '' && params[param] !== undefined
+      ).length
+
+      // We need exactly 4 parameters filled to calculate the 5th
+      if (filledParams !== 4) return null
+
+      // Return the empty parameter
       return requiredParams.find(param => 
-        !this.parameterValues[param] || this.parameterValues[param] === ''
+        !params[param] || params[param] === ''
       )
     },
     async calculate() {
       if (this.currentView !== 'tvm') return null
 
-      // Apply cash flow sign convention
-      const params = { ...this.parameterValues }
-      
-      // Convert values to numbers and apply sign convention
-      if (params.pv) params.pv = -Number(params.pv) // Money paid out is negative
-      if (params.fv) params.fv = Number(params.fv)  // Money received is positive
-      if (params.pmt) params.pmt = -Number(params.pmt) // Payments made are negative
-      if (params.i) params.i = Number(params.i)
-      if (params.n) params.n = Number(params.n)
-
-      // Determine which calculation to perform based on the missing parameter
-      const endpoint = this.currentParameter.key
+      // Filter out empty values and prepare parameters
+      const params = Object.entries(this.parameterValues).reduce((acc, [key, value]) => {
+        // Include non-empty values and always include pyr and end
+        if (value !== '' && value !== undefined) {
+          // Apply sign convention and convert to number if needed
+          if (key === 'pv' || key === 'pmt') {
+            acc[key] = -Number(value) // Money paid out is negative
+          } else if (key === 'fv' || key === 'i' || key === 'n') {
+            acc[key] = Number(value)  // Convert to number
+          } else {
+            acc[key] = value  // Keep as is for pyr and end
+          }
+        }
+        return acc
+      }, {})
 
       try {
-        const response = await fetch(`http://localhost:8000/api/fin/tvm/${endpoint}`, {
+        const response = await fetch(`http://localhost:8000/api/fin/tvm/${this.currentParameter.key}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
@@ -183,13 +197,13 @@ export default {
         
         // Reverse sign convention for display if needed
         let displayValue = result.value
-        if (endpoint === 'pv' || endpoint === 'pmt') {
+        if (this.currentParameter.key === 'pv' || this.currentParameter.key === 'pmt') {
           displayValue = -displayValue
         }
 
         return {
           value: displayValue,
-          parameter: endpoint
+          parameter: this.currentParameter.key
         }
       } catch (error) {
         console.error('Failed to calculate:', error)
