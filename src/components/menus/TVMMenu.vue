@@ -86,10 +86,27 @@ export default {
     },
     formatParameterValue(key) {
       const value = this.parameterValues[key]
+      
+      // Special handling for end/pyr
       if (key === 'end') {
         return this.parameterValues[key] ? 'END' : 'BEG'
       }
+      if (key === 'pyr') {
+        return value || '12'
+      }
+      
+      // Handle empty values
       if (!value && value !== 0) return '?'
+      
+      // Format numbers with 4 decimal places max
+      if (typeof value === 'string' && !isNaN(value)) {
+        const num = Number(value)
+        if (Number.isInteger(num)) {
+          return num.toString()
+        }
+        return num.toFixed(Math.min(4, value.split('.')[1]?.length || 0))
+      }
+      
       return value.toString()
     },
     requestCalculation() {
