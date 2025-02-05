@@ -104,20 +104,30 @@ export default {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
     },
-    selectParameter(param) {
+    async selectParameter(param) {
+      // If we're selecting a parameter that should be calculated
+      if (param.key === 'pv' && this.shouldCalculatePV()) {
+        await this.calculateParameter(param)
+        return
+      }
+
       this.currentParameter = param
       this.$emit('input-ready', {
         key: param.key,
         currentValue: this.parameterValues[param.key] || ''
       })
     },
+    shouldCalculatePV() {
+      const params = this.parameterValues
+      return params.n && params.i && params.fv && !params.pv
+    },
     async calculateParameter(param) {
       this.currentParameter = param
-      this.$emit('calculation-triggered')
       const result = await this.calculate()
       if (result !== null) {
         this.parameterValues[param.key] = String(result)
         this.$emit('parameter-update', this.parameterValues)
+        this.$emit('calculation-triggered')
       }
     },
     handleCalculatorInput(value) {
@@ -183,9 +193,10 @@ export default {
 
 .menu-content {
   position: fixed;
-  top: 2rem; /* Match body padding */
+  top: 50%; /* Center vertically */
   right: calc(50% - 160px); /* Center calculator width (320/2) */
   margin-right: -360px; /* Position to the right of calculator */
+  transform: translateY(-50%); /* Adjust for vertical centering */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);

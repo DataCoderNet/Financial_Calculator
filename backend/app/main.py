@@ -10,13 +10,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Configure CORS
+# Configure CORS to handle preflight requests
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5174"],  # Vue.js dev server
+    allow_origins=["http://localhost:5173", "http://localhost:5174"],  # Include both possible Vite ports
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["*"],  # Allows all methods, including OPTIONS
+    allow_headers=["*"],  # Allows all headers
+    expose_headers=["*"],  # Expose all headers
+    max_age=600,  # Cache preflight requests for 10 minutes
 )
 
 # Base models
