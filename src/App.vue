@@ -6,6 +6,7 @@
         :error="error"
         :description="inputDescription"
         :parameters="finParameters"
+        :calculated-parameter="calculatedParameter"
       />
       <!-- FIN button at the top -->
       <div class="fin-section">
@@ -13,7 +14,7 @@
           ref="finMenu" 
           @input-ready="handleParameterInput"
           @parameter-update="updateFinParameters"
-          @calculation-triggered="calculateFinancial"
+          @calculation-triggered="handleCalculation"
         />
       </div>
       <div class="calculator-grid">
@@ -55,8 +56,6 @@ import CalculatorDisplay from './components/CalculatorDisplay.vue'
 import CalculatorButton from './components/CalculatorButton.vue'
 import FinButtonMenu from './components/FinButtonMenu.vue'
 
-const API_BASE_URL = 'http://localhost:8000/api'
-
 export default {
   name: 'App',
   components: {
@@ -74,6 +73,7 @@ export default {
       // Financial calculation state
       isFinancialMode: false,
       currentParameter: null,
+      calculatedParameter: '',
       inputDescription: '',
       finParameters: null
     }
@@ -101,6 +101,7 @@ export default {
       this.waitingForSecondOperand = false
       this.error = ''
       this.inputDescription = ''
+      this.calculatedParameter = ''
     },
     appendDigit(digit) {
       if (this.waitingForSecondOperand) {
@@ -209,21 +210,15 @@ export default {
       this.currentParameter = param
       this.displayValue = param.currentValue || '0'
       this.inputDescription = `Enter ${param.key.toUpperCase()}`
+      this.calculatedParameter = ''
     },
     updateFinParameters(params) {
       this.finParameters = params
     },
-    async calculateFinancial() {
-      try {
-        const result = await this.$refs.finMenu.calculate()
-        if (result !== null) {
-          this.displayValue = String(result)
-          this.error = ''
-          this.inputDescription = ''
-        }
-      } catch (error) {
-        this.error = error.message
-      }
+    handleCalculation() {
+      this.calculatedParameter = this.currentParameter.key.toUpperCase()
+      this.displayValue = this.finParameters[this.currentParameter.key]
+      this.inputDescription = `${this.calculatedParameter}`
     }
   }
 }

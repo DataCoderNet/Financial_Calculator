@@ -8,7 +8,10 @@
           v-for="(value, key) in parameters" 
           :key="key"
           class="parameter-row"
-          :class="{ 'active': isActiveParameter(key) }"
+          :class="{ 
+            'active': isActiveParameter(key),
+            'calculated': isLastCalculated(key)
+          }"
         >
           <span class="param-label">{{ formatLabel(key) }}:</span>
           <span class="param-value">{{ formatValue(value) }}</span>
@@ -18,6 +21,7 @@
       <div class="current-input">
         <div v-if="description" class="input-description">
           {{ description }}
+          <span v-if="isCalculatedValue" class="calculated-badge">Calculated</span>
         </div>
         <div class="display-value" :class="{ 'with-description': description }">
           {{ formatValue(value) }}
@@ -46,6 +50,15 @@ export default {
     parameters: {
       type: Object,
       default: null
+    },
+    calculatedParameter: {
+      type: String,
+      default: ''
+    }
+  },
+  computed: {
+    isCalculatedValue() {
+      return this.calculatedParameter === this.description.split(' ')[1]
     }
   },
   methods: {
@@ -53,7 +66,8 @@ export default {
       if (!val && val !== 0) return '0'
       // Remove trailing zeros after decimal point
       if (String(val).includes('.')) {
-        return Number(val).toString()
+        const num = Number(val)
+        return num.toFixed(Math.min(4, String(val).split('.')[1].length))
       }
       return String(val)
     },
@@ -71,6 +85,9 @@ export default {
     },
     isActiveParameter(key) {
       return this.description === `Enter ${key.toUpperCase()}`
+    },
+    isLastCalculated(key) {
+      return key.toUpperCase() === this.calculatedParameter
     }
   }
 }
@@ -110,11 +127,16 @@ export default {
   justify-content: space-between;
   padding: 4px 8px;
   border-radius: 4px;
-  transition: background-color 0.2s;
+  transition: all 0.2s ease;
 }
 
 .parameter-row.active {
   background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+.parameter-row.calculated {
+  background-color: #e8f5e9;
   font-weight: 500;
 }
 
@@ -137,6 +159,24 @@ export default {
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 
+.input-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calculated-badge {
+  font-size: 0.8rem;
+  background-color: #4caf50;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
 .display-value {
   font-size: 2rem;
   font-weight: 500;
@@ -149,13 +189,6 @@ export default {
 
 .display-value.with-description {
   font-size: 1.8rem;
-}
-
-.input-description {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 4px;
-  text-align: left;
 }
 
 .error-message {
