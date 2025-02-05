@@ -14,7 +14,7 @@
           ref="finMenu" 
           @assign-value="handleAssignValue"
           @parameter-update="updateFinParameters"
-          @calculation-request="calculateFinancial"
+          @calculation-request="handleCalculationResult"
         />
       </div>
       <div class="calculator-grid">
@@ -183,11 +183,6 @@ export default {
       return Number.isFinite(result) ? result : current
     },
     calculate() {
-      if (this.isFinancialMode) {
-        this.calculateFinancial()
-        return
-      }
-
       if (!this.operator || this.waitingForSecondOperand) {
         return
       }
@@ -203,22 +198,17 @@ export default {
       this.isFinancialMode = true
       this.$refs.finMenu.assignParameterValue(param, this.displayValue)
       this.displayValue = '0'  // Reset display for next input
-      this.inputDescription = `${param.key.toUpperCase()} = ${this.displayValue}`
+      this.inputDescription = `${param.label} = ${this.displayValue}`
     },
     updateFinParameters(params) {
       this.finParameters = params
     },
-    async calculateFinancial() {
-      try {
-        const result = await this.$refs.finMenu.calculate()
-        if (result !== null) {
-          this.displayValue = String(result.value)
-          this.calculatedParameter = result.parameter.toUpperCase()
-          this.inputDescription = `${this.calculatedParameter}`
-          this.error = ''
-        }
-      } catch (error) {
-        this.error = error.message
+    handleCalculationResult(result) {
+      if (result) {
+        this.displayValue = String(result.value)
+        this.calculatedParameter = result.parameter.toUpperCase()
+        this.inputDescription = `${this.calculatedParameter} = ${result.value}`
+        this.error = ''
       }
     }
   }

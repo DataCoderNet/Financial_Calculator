@@ -111,7 +111,7 @@ export default {
       this.parameterValues[param.key] = value
       this.$emit('parameter-update', this.parameterValues)
     },
-    handleCalculate() {
+    async handleCalculate() {
       // Find which parameter is missing
       const missingParam = this.findMissingParameter()
       if (!missingParam) return
@@ -120,7 +120,19 @@ export default {
         key: missingParam,
         label: this.getParameterLabel(missingParam)
       }
-      this.calculate()
+      
+      try {
+        const result = await this.calculate()
+        if (result) {
+          // Update the UI with the calculated result
+          this.parameterValues[result.parameter] = String(result.value)
+          this.$emit('parameter-update', this.parameterValues)
+          // Trigger calculation completion
+          this.$emit('calculation-request', result)
+        }
+      } catch (error) {
+        console.error('Calculation failed:', error)
+      }
     },
     getParameterLabel(key) {
       const labels = {
@@ -174,10 +186,6 @@ export default {
         if (endpoint === 'pv' || endpoint === 'pmt') {
           displayValue = -displayValue
         }
-
-        // Store the calculated value
-        this.parameterValues[endpoint] = String(displayValue)
-        this.$emit('parameter-update', this.parameterValues)
 
         return {
           value: displayValue,
