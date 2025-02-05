@@ -1,5 +1,5 @@
 <template>
-  <div class="calculator-display">
+  <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <div v-if="error" class="error-message">{{ error }}</div>
     <div v-else class="display-container">
       <!-- TVM Parameters display -->
@@ -116,9 +116,14 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  min-height: 200px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
+  transition: min-height 0.3s ease;
+}
+
+.calculator-display.expanded {
+  min-height: 200px;
 }
 
 .display-container {
