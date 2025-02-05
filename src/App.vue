@@ -12,31 +12,31 @@
       <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
 
       <!-- Second row -->
-      <CalculatorButton label="7" type="digit" @click="appendDigit('7')" />
-      <CalculatorButton label="8" type="digit" @click="appendDigit('8')" />
-      <CalculatorButton label="9" type="digit" @click="appendDigit('9')" />
+      <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
+      <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
+      <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
       <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
 
       <!-- Third row -->
-      <CalculatorButton label="4" type="digit" @click="appendDigit('4')" />
-      <CalculatorButton label="5" type="digit" @click="appendDigit('5')" />
-      <CalculatorButton label="6" type="digit" @click="appendDigit('6')" />
+      <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
+      <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
+      <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
       <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
 
       <!-- Fourth row -->
-      <CalculatorButton label="1" type="digit" @click="appendDigit('1')" />
-      <CalculatorButton label="2" type="digit" @click="appendDigit('2')" />
-      <CalculatorButton label="3" type="digit" @click="appendDigit('3')" />
+      <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
+      <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
+      <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
       <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
 
       <!-- Fifth row -->
-      <CalculatorButton label="0" type="digit" @click="appendDigit('0')" class="span-2" />
-      <CalculatorButton label="." type="digit" @click="appendDecimal" />
+      <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
+      <CalculatorButton label="." type="digit" @click="handleInput('.')" />
       <CalculatorButton label="=" type="operator" @click="calculate" />
     </div>
     <!-- FIN menu at the bottom -->
     <div class="fin-section">
-      <FinButtonMenu />
+      <FinButtonMenu ref="finMenu" @parameter-input="handleParameterInput" />
     </div>
   </div>
 </template>
@@ -45,6 +45,8 @@
 import CalculatorDisplay from './components/CalculatorDisplay.vue'
 import CalculatorButton from './components/CalculatorButton.vue'
 import FinButtonMenu from './components/FinButtonMenu.vue'
+
+const API_BASE_URL = 'http://localhost:8000/api'
 
 export default {
   name: 'App',
@@ -59,11 +61,35 @@ export default {
       previousValue: null,
       operator: null,
       waitingForSecondOperand: false,
-      error: ''
+      error: '',
+      // Financial calculation state
+      isFinancialMode: false,
+      currentFinancialFunction: null,
+      financialParameters: {}
     }
   },
   methods: {
+    handleInput(value) {
+      if (this.isFinancialMode) {
+        // If in financial mode, pass input to FIN menu
+        this.$refs.finMenu.handleCalculatorInput(value)
+        return
+      }
+
+      // Normal calculator input handling
+      if (value === '.') {
+        this.appendDecimal()
+      } else {
+        this.appendDigit(value)
+      }
+    },
     clear() {
+      if (this.isFinancialMode) {
+        // If in financial mode, reset financial state
+        this.isFinancialMode = false
+        this.currentFinancialFunction = null
+        this.financialParameters = {}
+      }
       this.displayValue = '0'
       this.previousValue = null
       this.operator = null
@@ -103,7 +129,6 @@ export default {
         this.displayValue = String(currentValue / 100)
       }
       
-      // Clear any error that might have been showing
       this.error = ''
     },
     setOperator(nextOperator) {
@@ -153,6 +178,11 @@ export default {
       return Number.isFinite(result) ? result : current
     },
     calculate() {
+      if (this.isFinancialMode) {
+        this.calculateFinancial()
+        return
+      }
+
       if (!this.operator || this.waitingForSecondOperand) {
         return
       }
@@ -162,6 +192,40 @@ export default {
       this.previousValue = null
       this.operator = null
       this.waitingForSecondOperand = false
+    },
+    // Financial calculation methods
+    handleParameterInput(paramData) {
+      this.isFinancialMode = true
+      this.currentFinancialFunction = paramData
+      this.displayValue = '0'
+      this.waitingForSecondOperand = false
+    },
+    async calculateFinancial() {
+      if (!this.currentFinancialFunction) return
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/fin/tvm/${this.currentFinancialFunction.key}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(this.financialParameters)
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.detail || 'Calculation failed')
+        }
+
+        const result = await response.json()
+        this.displayValue = String(result.value)
+        this.isFinancialMode = false
+        this.currentFinancialFunction = null
+        this.financialParameters = {}
+      } catch (error) {
+        this.error = error.message
+        console.error('Financial calculation error:', error)
+      }
     }
   }
 }

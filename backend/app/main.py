@@ -1,12 +1,22 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
-from typing import Optional, Union
+from typing import Optional
 from .calculations import tvm
 
 app = FastAPI(
     title="Financial Calculator API",
     description="Backend API for Financial Calculator inspired by HP 17BII+",
     version="1.0.0"
+)
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5174"],  # Vue.js dev server
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Base models
