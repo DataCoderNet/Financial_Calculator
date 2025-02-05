@@ -1,10 +1,35 @@
 <template>
-  <div class="calculator-display" :class="{ error: hasError }">
-    <div class="display-content">
-      {{ displayValue || '0' }}
-    </div>
-    <div v-if="hasError" class="error-message">
-      {{ error }}
+  <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
+    <div v-if="error" class="error-message">{{ error }}</div>
+    <div v-else class="display-container">
+      <!-- TVM Parameters display -->
+      <div 
+        v-if="parameters && isFinancialMode" 
+        class="parameters-display"
+      >
+        <div 
+          v-for="(value, key) in filteredParameters" 
+          :key="key"
+          class="parameter-row"
+          :class="{ 
+            'active': isActiveParameter(key),
+            'calculated': isLastCalculated(key)
+          }"
+        >
+          <span class="param-label">{{ formatLabel(key) }}:</span>
+          <span class="param-value">{{ formatValue(value) }}</span>
+        </div>
+      </div>
+      <!-- Current input display -->
+      <div class="current-input">
+        <div v-if="description" class="input-description">
+          {{ description }}
+          <span v-if="isCalculatedValue" class="calculated-badge">Calculated</span>
+        </div>
+        <div class="display-value" :class="{ 'with-description': description }">
+          {{ formatValue(value) }}
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -13,24 +38,73 @@
 export default {
   name: 'CalculatorDisplay',
   props: {
-    // Value to display
     value: {
-      type: [Number, String],
-      default: '0'
+      type: String,
+      required: true
     },
-    // Error message (if any)
     error: {
       type: String,
       default: ''
+    },
+    description: {
+      type: String,
+      default: ''
+    },
+    parameters: {
+      type: Object,
+      default: null
+    },
+    calculatedParameter: {
+      type: String,
+      default: ''
+    },
+    isFinancialMode: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
-    hasError() {
-      return Boolean(this.error)
+    isCalculatedValue() {
+      return this.calculatedParameter === this.description.split(' ')[1]
     },
-    displayValue() {
-      if (this.hasError) return 'Error'
-      return this.value
+    filteredParameters() {
+      if (!this.parameters) return {}
+      
+      // Only include main TVM parameters
+      const mainParams = ['n', 'i', 'pv', 'pmt', 'fv']
+      return Object.fromEntries(
+        Object.entries(this.parameters)
+          .filter(([key]) => mainParams.includes(key))
+      )
+    }
+  },
+  methods: {
+    formatValue(val) {
+      if (!val && val !== 0) return '0'
+      // Remove trailing zeros after decimal point
+      if (String(val).includes('.')) {
+        const num = Number(val)
+        return num.toFixed(Math.min(4, String(val).split('.')[1].length))
+      }
+      return String(val)
+    },
+    formatLabel(key) {
+      const labels = {
+        n: 'N',
+        i: 'I%YR',
+        pv: 'PV',
+        pmt: 'PMT',
+        fv: 'FV',
+        pyr: 'P/YR',
+        end: 'END'
+      }
+      return labels[key] || key.toUpperCase()
+    },
+    isActiveParameter(key) {
+      return this.description === `Enter ${key.toUpperCase()}`
+    },
+    isLastCalculated(key) {
+      return key.toUpperCase() === this.calculatedParameter
     }
   }
 }
@@ -38,43 +112,114 @@ export default {
 
 <style scoped>
 .calculator-display {
-  width: 100%;
-  min-height: 65px; /* Reduced from 80px */
-  background-color: #424242;
-  border-radius: 8px; /* Reduced from 10px */
-  margin-bottom: 15px; /* Reduced from 20px */
-  padding: 8px 15px; /* Reduced from 10px 20px */
-  box-sizing: border-box;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 15px;
+  min-height: 80px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  overflow: hidden;
+  transition: min-height 0.3s ease;
 }
 
-.display-content {
-  color: white;
-  font-size: 2rem; /* Reduced from 2.5rem */
-  font-family: 'Digital', monospace;
+.calculator-display.expanded {
+  min-height: 200px;
+}
+
+.display-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.parameters-display {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 15px;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.parameter-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.parameter-row.active {
+  background-color: #e3f2fd;
+  font-weight: 500;
+}
+
+.parameter-row.calculated {
+  background-color: #e8f5e9;
+  font-weight: 500;
+}
+
+.param-label {
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.param-value {
+  font-size: 0.9rem;
+  color: #333;
+  font-family: monospace;
+}
+
+.current-input {
   text-align: right;
-  white-space: nowrap;
+  padding: 10px;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.input-description {
+  font-size: 0.9rem;
+  color: #666;
+  margin-bottom: 4px;
+  text-align: left;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.calculated-badge {
+  font-size: 0.8rem;
+  background-color: #4caf50;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.display-value {
+  font-size: 2rem;
+  font-weight: 500;
+  color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: monospace;
+}
+
+.display-value.with-description {
+  font-size: 1.8rem;
 }
 
 .error-message {
-  color: #ff8a80;
-  font-size: 0.875rem; /* Reduced from 1rem */
-  text-align: right;
-  margin-top: 4px; /* Reduced from 5px */
-}
-
-.calculator-display.error .display-content {
-  color: #ff8a80;
-}
-
-/* Digital font effect */
-@font-face {
-  font-family: 'Digital';
-  src: local('Courier New');
+  color: #dc3545;
+  font-size: 1rem;
+  padding: 10px;
+  text-align: center;
+  background-color: #fff;
+  border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
 }
 </style>

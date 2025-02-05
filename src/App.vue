@@ -1,42 +1,54 @@
 <template>
-  <div class="calculator">
-    <CalculatorDisplay
-      :value="displayValue"
-      :error="error"
-    />
-    <div class="calculator-grid">
-      <!-- First row -->
-      <CalculatorButton label="C" type="function" @click="clear" />
-      <CalculatorButton label="±" type="function" @click="toggleSign" />
-      <CalculatorButton label="%" type="function" @click="percentage" />
-      <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
+  <div class="app-container">
+    <div class="calculator">
+      <CalculatorDisplay
+        :value="displayValue"
+        :error="error"
+        :description="inputDescription"
+        :parameters="finParameters"
+        :calculated-parameter="calculatedParameter"
+        :is-financial-mode="isFinancialMode"
+      />
+      <!-- FIN button at the top -->
+      <div class="fin-section">
+        <FinButtonMenu 
+          ref="finMenu" 
+          @assign-value="handleAssignValue"
+          @parameter-update="updateFinParameters"
+          @calculation-request="handleCalculationResult"
+          @menu-state="handleMenuState"
+        />
+      </div>
+      <div class="calculator-grid">
+        <!-- First row -->
+        <CalculatorButton label="C" type="function" @click="clearAll" />
+        <CalculatorButton label="±" type="function" @click="toggleSign" />
+        <CalculatorButton label="%" type="function" @click="percentage" />
+        <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
 
-      <!-- Second row -->
-      <CalculatorButton label="7" type="digit" @click="appendDigit('7')" />
-      <CalculatorButton label="8" type="digit" @click="appendDigit('8')" />
-      <CalculatorButton label="9" type="digit" @click="appendDigit('9')" />
-      <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
+        <!-- Second row -->
+        <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
+        <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
+        <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
+        <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
 
-      <!-- Third row -->
-      <CalculatorButton label="4" type="digit" @click="appendDigit('4')" />
-      <CalculatorButton label="5" type="digit" @click="appendDigit('5')" />
-      <CalculatorButton label="6" type="digit" @click="appendDigit('6')" />
-      <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
+        <!-- Third row -->
+        <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
+        <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
+        <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
+        <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
 
-      <!-- Fourth row -->
-      <CalculatorButton label="1" type="digit" @click="appendDigit('1')" />
-      <CalculatorButton label="2" type="digit" @click="appendDigit('2')" />
-      <CalculatorButton label="3" type="digit" @click="appendDigit('3')" />
-      <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
+        <!-- Fourth row -->
+        <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
+        <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
+        <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
+        <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
 
-      <!-- Fifth row -->
-      <CalculatorButton label="0" type="digit" @click="appendDigit('0')" class="span-2" />
-      <CalculatorButton label="." type="digit" @click="appendDecimal" />
-      <CalculatorButton label="=" type="operator" @click="calculate" />
-    </div>
-    <!-- FIN menu at the bottom -->
-    <div class="fin-section">
-      <FinButtonMenu />
+        <!-- Fifth row -->
+        <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
+        <CalculatorButton label="." type="digit" @click="appendDecimal" />
+        <CalculatorButton label="=" type="operator" @click="calculate" />
+      </div>
     </div>
   </div>
 </template>
@@ -59,16 +71,45 @@ export default {
       previousValue: null,
       operator: null,
       waitingForSecondOperand: false,
-      error: ''
+      error: '',
+      // Financial calculation state
+      isFinancialMode: false,
+      currentParameter: null,
+      calculatedParameter: '',
+      inputDescription: '',
+      finParameters: null
     }
   },
   methods: {
-    clear() {
+    handleInput(value) {
+      if (this.isFinancialMode) {
+        // Always update display value in financial mode
+        const newValue = this.displayValue === '0' ? value : this.displayValue + value
+        this.displayValue = newValue
+        return
+      }
+
+      // Normal calculator input handling
+      this.appendDigit(value)
+    },
+    clearAll() {
+      // Reset calculator display
       this.displayValue = '0'
       this.previousValue = null
       this.operator = null
       this.waitingForSecondOperand = false
       this.error = ''
+      this.inputDescription = ''
+      this.calculatedParameter = ''
+      
+      // Reset financial mode state
+      this.isFinancialMode = false
+      this.currentParameter = null
+
+      // Reset all TVM parameters
+      if (this.$refs.finMenu) {
+        this.$refs.finMenu.resetState()
+      }
     },
     appendDigit(digit) {
       if (this.waitingForSecondOperand) {
@@ -89,24 +130,22 @@ export default {
       }
     },
     toggleSign() {
-      this.displayValue = String(-parseFloat(this.displayValue))
+      const value = parseFloat(this.displayValue) * -1
+      this.displayValue = String(value)
     },
     percentage() {
-      const currentValue = parseFloat(this.displayValue)
-      
-      if (this.operator && this.previousValue !== null) {
-        // If we're in the middle of an operation, calculate percentage of the first number
-        const percentValue = (currentValue / 100) * this.previousValue
-        this.displayValue = String(percentValue)
-      } else {
-        // If no operation is in progress, just convert to percentage
-        this.displayValue = String(currentValue / 100)
-      }
-      
-      // Clear any error that might have been showing
-      this.error = ''
+      const value = parseFloat(this.displayValue) / 100
+      this.displayValue = String(value)
     },
     setOperator(nextOperator) {
+      if (this.isFinancialMode) {
+        // In financial mode, + and - are used for sign changes
+        if (nextOperator === '+' || nextOperator === '-') {
+          this.toggleSign()
+        }
+        return
+      }
+
       const value = parseFloat(this.displayValue)
       
       if (this.previousValue === null) {
@@ -162,6 +201,32 @@ export default {
       this.previousValue = null
       this.operator = null
       this.waitingForSecondOperand = false
+    },
+    handleAssignValue(param) {
+      // Assign the current display value to the selected parameter
+      this.isFinancialMode = true
+      this.$refs.finMenu.assignParameterValue(param, this.displayValue)
+      this.displayValue = '0'  // Reset display for next input
+      this.inputDescription = `${param.label} = ${this.displayValue}`
+    },
+    updateFinParameters(params) {
+      this.finParameters = params
+    },
+    handleCalculationResult(result) {
+      if (result) {
+        this.displayValue = String(result.value)
+        this.calculatedParameter = result.parameter.toUpperCase()
+        this.inputDescription = `${this.calculatedParameter} = ${result.value}`
+        this.error = ''
+      }
+    },
+    handleMenuState(isOpen) {
+      // Update financial mode based on menu state
+      this.isFinancialMode = isOpen
+      if (!isOpen) {
+        this.calculatedParameter = ''
+        this.inputDescription = ''
+      }
     }
   }
 }
@@ -170,18 +235,21 @@ export default {
 <style>
 body {
   margin: 0;
-  display: flex;
-  place-items: center;
+  padding: 2rem;
   min-width: 320px;
   min-height: 100vh;
   background-color: #f0f0f0;
 }
 
 #app {
-  max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
   text-align: center;
+}
+
+.app-container {
+  position: relative;
+  width: fit-content;
+  margin: 0 auto;
 }
 
 .calculator {
@@ -189,8 +257,9 @@ body {
   border-radius: 15px;
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  width: 280px;
-  margin: 0 auto;
+  width: 320px;
+  display: flex;
+  flex-direction: column;
 }
 
 .calculator-grid {
@@ -205,8 +274,8 @@ body {
 }
 
 .fin-section {
-  margin-top: 12px;
+  margin-bottom: 12px;
   display: flex;
-  justify-content: center;
+  justify-content: flex-start;
 }
 </style>
