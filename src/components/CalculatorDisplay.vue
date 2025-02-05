@@ -3,9 +3,12 @@
     <div v-if="error" class="error-message">{{ error }}</div>
     <div v-else class="display-container">
       <!-- TVM Parameters display -->
-      <div v-if="parameters" class="parameters-display">
+      <div 
+        v-if="parameters && isFinancialMode" 
+        class="parameters-display"
+      >
         <div 
-          v-for="(value, key) in parameters" 
+          v-for="(value, key) in filteredParameters" 
           :key="key"
           class="parameter-row"
           :class="{ 
@@ -54,11 +57,25 @@ export default {
     calculatedParameter: {
       type: String,
       default: ''
+    },
+    isFinancialMode: {
+      type: Boolean,
+      default: false
     }
   },
   computed: {
     isCalculatedValue() {
       return this.calculatedParameter === this.description.split(' ')[1]
+    },
+    filteredParameters() {
+      if (!this.parameters) return {}
+      
+      // Only include main TVM parameters
+      const mainParams = ['n', 'i', 'pv', 'pmt', 'fv']
+      return Object.fromEntries(
+        Object.entries(this.parameters)
+          .filter(([key]) => mainParams.includes(key))
+      )
     }
   },
   methods: {

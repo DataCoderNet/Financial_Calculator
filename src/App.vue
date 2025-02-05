@@ -7,6 +7,7 @@
         :description="inputDescription"
         :parameters="finParameters"
         :calculated-parameter="calculatedParameter"
+        :is-financial-mode="isFinancialMode"
       />
       <!-- FIN button at the top -->
       <div class="fin-section">
@@ -15,6 +16,7 @@
           @assign-value="handleAssignValue"
           @parameter-update="updateFinParameters"
           @calculation-request="handleCalculationResult"
+          @menu-state="handleMenuState"
         />
       </div>
       <div class="calculator-grid">
@@ -216,6 +218,14 @@ export default {
         this.calculatedParameter = result.parameter.toUpperCase()
         this.inputDescription = `${this.calculatedParameter} = ${result.value}`
         this.error = ''
+      }
+    },
+    handleMenuState(isOpen) {
+      // Update financial mode based on menu state
+      this.isFinancialMode = isOpen
+      if (!isOpen) {
+        this.calculatedParameter = ''
+        this.inputDescription = ''
       }
     }
   }

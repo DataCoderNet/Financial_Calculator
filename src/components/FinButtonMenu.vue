@@ -50,7 +50,7 @@ export default {
     CalculatorButton,
     TVMMenu
   },
-  emits: ['assign-value', 'parameter-update', 'calculation-request'],
+  emits: ['assign-value', 'parameter-update', 'calculation-request', 'menu-state'],
   data() {
     return {
       isMenuOpen: false,
@@ -78,12 +78,14 @@ export default {
   methods: {
     toggleMenu() {
       this.isMenuOpen = !this.isMenuOpen
+      this.$emit('menu-state', this.isMenuOpen)
       if (!this.isMenuOpen) {
         this.resetState()
       }
     },
     closeMenu() {
       this.isMenuOpen = false
+      this.$emit('menu-state', false)
       this.resetState()
     },
     resetState() {
@@ -103,6 +105,7 @@ export default {
     selectCategory(category) {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
+      this.$emit('menu-state', true)
     },
     assignToParameter(param) {
       this.$emit('assign-value', param)
