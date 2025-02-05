@@ -1,5 +1,5 @@
 <template>
-  <div class="calculator-container">
+  <div class="app-container">
     <div class="calculator">
       <CalculatorDisplay
         :value="displayValue"
@@ -7,13 +7,13 @@
         :description="inputDescription"
         :parameters="finParameters"
       />
-      <!-- Move FIN button above calculator grid -->
+      <!-- FIN button at the top -->
       <div class="fin-section">
         <FinButtonMenu 
           ref="finMenu" 
           @input-ready="handleParameterInput"
           @parameter-update="updateFinParameters"
-          @calculate="handleCalculate"
+          @calculation-triggered="calculateFinancial"
         />
       </div>
       <div class="calculator-grid">
@@ -213,12 +213,16 @@ export default {
     updateFinParameters(params) {
       this.finParameters = params
     },
-    async handleCalculate(result) {
-      if (result !== null) {
-        this.displayValue = String(result)
-        this.isFinancialMode = false
-        this.currentParameter = null
-        this.inputDescription = ''
+    async calculateFinancial() {
+      try {
+        const result = await this.$refs.finMenu.calculate()
+        if (result !== null) {
+          this.displayValue = String(result)
+          this.error = ''
+          this.inputDescription = ''
+        }
+      } catch (error) {
+        this.error = error.message
       }
     }
   }
@@ -228,23 +232,21 @@ export default {
 <style>
 body {
   margin: 0;
+  padding: 2rem;
   min-width: 320px;
   min-height: 100vh;
   background-color: #f0f0f0;
-  padding: 2rem;
 }
 
 #app {
-  max-width: 1280px;
   margin: 0 auto;
   text-align: center;
 }
 
-.calculator-container {
-  display: inline-flex;
-  gap: 20px;
+.app-container {
+  position: relative;
+  width: fit-content;
   margin: 0 auto;
-  align-items: flex-start;
 }
 
 .calculator {

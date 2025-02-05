@@ -9,7 +9,7 @@
     />
 
     <!-- Menu Content -->
-    <div v-if="isMenuOpen" class="menu-overlay">
+    <div v-if="isMenuOpen" class="menu-content">
       <!-- Main Categories Menu -->
       <div v-if="currentView === 'main'" class="main-menu">
         <div class="menu-header">
@@ -49,7 +49,7 @@ export default {
     CalculatorButton,
     TVMMenu
   },
-  emits: ['input-ready', 'parameter-update', 'calculate'],
+  emits: ['input-ready', 'parameter-update', 'calculation-triggered'],
   data() {
     return {
       isMenuOpen: false,
@@ -104,9 +104,11 @@ export default {
       this.$emit('parameter-update', this.parameterValues)
     },
     selectParameter(param) {
-      // If clicking the same parameter that's already filled, perform calculation
-      if (this.currentParameter?.key === param.key && this.parameterValues[param.key]) {
-        this.calculate()
+      // If we're selecting a parameter that already has a value,
+      // and it's not the current parameter, trigger calculation
+      if (this.parameterValues[param.key] && this.currentParameter?.key !== param.key) {
+        this.currentParameter = param
+        this.$emit('calculation-triggered')
         return
       }
       
@@ -164,8 +166,6 @@ export default {
         this.parameterValues[endpoint] = String(displayValue)
         this.$emit('parameter-update', this.parameterValues)
         
-        // Emit calculation result
-        this.$emit('calculate', displayValue)
         return displayValue
       } catch (error) {
         console.error('Failed to calculate:', error)
@@ -183,10 +183,10 @@ export default {
   z-index: 100;
 }
 
-.menu-overlay {
-  position: fixed;
-  left: 400px; /* Position after calculator width + gap */
-  top: 2rem; /* Match body padding */
+.menu-content {
+  position: absolute;
+  top: -20px; /* Align with calculator top */
+  left: 360px; /* Position after calculator */
   background-color: #ffffff;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
