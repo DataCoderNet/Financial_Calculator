@@ -63,23 +63,17 @@ export default {
   },
   methods: {
     handleParameterClick(func) {
-      // If clicking a parameter that needs to be calculated
-      if (this.shouldCalculateParameter(func)) {
+      // Check if this parameter should be calculated
+      if (this.canCalculateParameter(func)) {
         this.$emit('calculate-parameter', func)
       } else {
         this.$emit('select-parameter', func)
       }
     },
-    shouldCalculateParameter(func) {
-      // Return true if:
-      // 1. This parameter doesn't have a value yet
-      // 2. We have enough other parameters to calculate it
+    canCalculateParameter(func) {
       const params = this.parameterValues
-      const hasValue = params[func.key] !== '' && params[func.key] !== undefined
-
-      if (hasValue) return false
-
-      // Check if we have enough parameters to calculate
+      
+      // Define required parameters for each calculation
       const requiredParams = {
         pv: ['n', 'i', 'fv'],
         fv: ['n', 'i', 'pv'],
@@ -87,11 +81,20 @@ export default {
         i: ['n', 'pv', 'fv'],
         pmt: ['n', 'i', 'pv', 'fv']
       }
+      
+      const required = requiredParams[func.key]
+      if (!required) return false
 
-      const required = requiredParams[func.key] || []
-      return required.every(param => 
-        params[param] !== '' && params[param] !== undefined
+      // Check if all required parameters except the current one are filled
+      const hasRequiredParams = required.every(param => 
+        !!params[param] && params[param] !== ''
       )
+      
+      // Check if current parameter is empty
+      const isCurrentEmpty = !params[func.key] || params[func.key] === ''
+
+      // Return true if we have all required params and current is empty
+      return hasRequiredParams && isCurrentEmpty
     },
     isActive(func) {
       return this.currentParameter?.key === func.key
@@ -103,6 +106,22 @@ export default {
       }
       if (!value && value !== 0) return '?'
       return value.toString()
+    }
+  },
+  watch: {
+    // Watch for changes in parameter values
+    parameterValues: {
+      deep: true,
+      handler(newValues) {
+        // Find any parameter that can be calculated
+        const calculableParam = this.tvmFunctions.find(func => 
+          this.canCalculateParameter(func)
+        )
+        
+        if (calculableParam) {
+          this.$emit('calculate-parameter', calculableParam)
+        }
+      }
     }
   }
 }

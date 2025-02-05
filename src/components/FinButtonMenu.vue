@@ -104,22 +104,12 @@ export default {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
     },
-    async selectParameter(param) {
-      // If we're selecting a parameter that should be calculated
-      if (param.key === 'pv' && this.shouldCalculatePV()) {
-        await this.calculateParameter(param)
-        return
-      }
-
+    selectParameter(param) {
       this.currentParameter = param
       this.$emit('input-ready', {
         key: param.key,
         currentValue: this.parameterValues[param.key] || ''
       })
-    },
-    shouldCalculatePV() {
-      const params = this.parameterValues
-      return params.n && params.i && params.fv && !params.pv
     },
     async calculateParameter(param) {
       this.currentParameter = param
@@ -128,6 +118,12 @@ export default {
         this.parameterValues[param.key] = String(result)
         this.$emit('parameter-update', this.parameterValues)
         this.$emit('calculation-triggered')
+        
+        // Update the display with the result
+        this.$emit('input-ready', {
+          key: param.key,
+          currentValue: String(result)
+        })
       }
     },
     handleCalculatorInput(value) {
@@ -201,6 +197,8 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0,0,0,0.1);
   min-width: 280px;
+  max-height: 80vh;
+  overflow-y: auto;
 }
 
 .menu-header {
