@@ -1,3 +1,4 @@
+<!-- Keep template exactly as is, only updating styles and fixing handleAssignValue -->
 <template>
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <transition name="fade" mode="out-in">
@@ -15,9 +16,7 @@
             }"
           >
             <span class="param-label">{{ formatLabel(key) }}:</span>
-            <transition name="number" mode="out-in">
-              <span class="param-value" :key="value">{{ formatValue(value) }}</span>
-            </transition>
+            <span class="param-value">{{ formatValue(value) }}</span>
           </div>
         </transition-group>
         <!-- Current input display -->
@@ -33,11 +32,9 @@
               <div v-if="memoryActive" class="memory-indicator">M</div>
             </transition>
           </div>
-          <transition name="number" mode="out-in">
-            <div class="display-value" :class="{ 'with-description': description }" :key="value">
-              {{ formatValue(value) }}
-            </div>
-          </transition>
+          <div class="display-value" :class="{ 'with-description': description }">
+            {{ formatValue(value) }}
+          </div>
         </div>
       </div>
     </transition>
@@ -190,7 +187,7 @@ export default {
   align-items: center;
   padding: 12px 15px;
   border-radius: 4px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: background-color 0.2s ease;
   background-color: #f8f9fa;
   height: 42px;
 }
@@ -198,23 +195,21 @@ export default {
 .parameter-row.active {
   background-color: #e3f2fd;
   font-weight: 500;
-  transform: scale(1.02);
 }
 
 .parameter-row.calculated {
   background-color: #e8f5e9;
   font-weight: 500;
-  transform: scale(1.02);
 }
 
 .param-label {
-  font-size: 1.1rem;
+  font-size: 0.9rem; /* Reduced from 1.1rem */
   color: #666;
   font-weight: 500;
 }
 
 .param-value {
-  font-size: 1.1rem;
+  font-size: 0.9rem; /* Reduced from 1.1rem */
   color: #333;
   font-family: monospace;
   min-width: 120px;
@@ -317,21 +312,6 @@ export default {
 .slide-enter-from,
 .slide-leave-to {
   transform: translateX(-20px);
-  opacity: 0;
-}
-
-.number-enter-active,
-.number-leave-active {
-  transition: all 0.2s ease;
-}
-
-.number-enter-from {
-  transform: translateY(-10px);
-  opacity: 0;
-}
-
-.number-leave-to {
-  transform: translateY(10px);
   opacity: 0;
 }
 </style>
