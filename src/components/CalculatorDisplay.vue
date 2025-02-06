@@ -1,5 +1,4 @@
 <template>
-  <!-- Keep template exactly as is, only updating styles -->
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <transition name="fade" mode="out-in">
       <div v-if="error" class="error-message">{{ error }}</div>
@@ -46,7 +45,6 @@
 </template>
 
 <script>
-// Keep script exactly as is
 export default {
   name: 'CalculatorDisplay',
   props: {
@@ -156,7 +154,7 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  height: 120px; /* Slightly taller base height */
+  height: 120px;
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,14 +162,14 @@ export default {
 }
 
 .calculator-display.expanded {
-  height: 380px; /* Much taller expanded height */
+  height: 380px;
 }
 
 .display-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 15px; /* Add gap between parameters and input */
+  gap: 15px;
 }
 
 .parameters-display {
@@ -183,7 +181,7 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  min-height: 250px; /* Ensure enough space for parameters */
+  min-height: 250px;
 }
 
 .parameter-row {
@@ -194,7 +192,7 @@ export default {
   border-radius: 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: #f8f9fa;
-  height: 42px; /* Fixed height for parameter rows */
+  height: 42px;
 }
 
 .parameter-row.active {
@@ -229,7 +227,7 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 90px; /* Taller input area */
+  height: 90px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -239,7 +237,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 28px; /* Slightly taller description area */
+  min-height: 28px;
 }
 
 .description-text {
@@ -268,7 +266,7 @@ export default {
 }
 
 .display-value {
-  font-size: 2.2rem; /* Slightly larger display value */
+  font-size: 1.8rem;
   font-weight: 500;
   color: #333;
   line-height: 1.2;
@@ -276,14 +274,14 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: monospace;
-  height: 48px; /* Taller display value area */
+  height: 48px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
 .display-value.with-description {
-  font-size: 2rem;
+  font-size: 1.6rem;
 }
 
 .error-message {
@@ -300,7 +298,7 @@ export default {
   justify-content: center;
 }
 
-/* Keep transitions exactly as they were */
+/* Transitions */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;

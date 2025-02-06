@@ -1,4 +1,3 @@
-<!-- Keep template and script exactly as they were, only updating the style section -->
 <template>
   <div class="app-container">
     <div class="calculator">
@@ -63,7 +62,6 @@
 </template>
 
 <script>
-// Keep script exactly as it was
 import CalculatorDisplay from './components/CalculatorDisplay.vue'
 import CalculatorButton from './components/CalculatorButton.vue'
 import FinButtonMenu from './components/FinButtonMenu.vue'
@@ -82,15 +80,18 @@ export default {
       operator: null,
       waitingForSecondOperand: false,
       error: '',
+      // Financial calculation state
       isFinancialMode: false,
       currentParameter: null,
       calculatedParameter: '',
       inputDescription: '',
       finParameters: null,
+      // Memory state
       memoryValue: 0
     }
   },
   methods: {
+    // Memory Operations
     memoryAdd() {
       const currentValue = parseFloat(this.displayValue)
       if (!isNaN(currentValue)) {
@@ -114,13 +115,17 @@ export default {
     },
     handleInput(value) {
       if (this.isFinancialMode) {
+        // Always update display value in financial mode
         const newValue = this.displayValue === '0' ? value : this.displayValue + value
         this.displayValue = newValue
         return
       }
+
+      // Normal calculator input handling
       this.appendDigit(value)
     },
     clearAll() {
+      // Reset calculator display
       this.displayValue = '0'
       this.previousValue = null
       this.operator = null
@@ -128,8 +133,12 @@ export default {
       this.error = ''
       this.inputDescription = ''
       this.calculatedParameter = ''
+      
+      // Reset financial mode state
       this.isFinancialMode = false
       this.currentParameter = null
+
+      // Reset all TVM parameters
       if (this.$refs.finMenu) {
         this.$refs.finMenu.resetState()
       }
@@ -162,6 +171,7 @@ export default {
     },
     setOperator(nextOperator) {
       if (this.isFinancialMode) {
+        // In financial mode, + and - are used for sign changes
         if (nextOperator === '+' || nextOperator === '-') {
           this.toggleSign()
         }
@@ -209,6 +219,7 @@ export default {
           return current
       }
       
+      // Format the result to prevent floating point issues
       result = parseFloat(result.toFixed(10))
       return Number.isFinite(result) ? result : current
     },
@@ -224,9 +235,10 @@ export default {
       this.waitingForSecondOperand = false
     },
     handleAssignValue(param) {
+      // Assign the current display value to the selected parameter
       this.isFinancialMode = true
       this.$refs.finMenu.assignParameterValue(param, this.displayValue)
-      this.displayValue = '0'
+      this.displayValue = '0'  // Reset display for next input
       this.inputDescription = `${param.label} = ${this.displayValue}`
     },
     updateFinParameters(params) {
@@ -241,6 +253,7 @@ export default {
       }
     },
     handleMenuState(isOpen) {
+      // Update financial mode based on menu state
       this.isFinancialMode = isOpen
       if (!isOpen) {
         this.calculatedParameter = ''
@@ -282,12 +295,12 @@ body {
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 320px;
-  height: 740px; /* Increased height to accommodate expanded display */
-  display: flex;
-  flex-direction: column;
+  min-height: 740px;
+  display: grid;
+  grid-template-rows: auto auto auto auto; /* Fixed layout: display, memory, fin, calculator grid */
+  gap: 12px;
   position: sticky;
   top: 2rem;
-  gap: 12px; /* Add gap between all sections */
 }
 
 .memory-row {
@@ -300,10 +313,11 @@ body {
 .calculator-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(5, 1fr);
   gap: 8px;
   padding: 8px;
-  flex: 1;
-  margin-top: auto; /* Push to bottom */
+  height: 300px; /* Fixed height */
+  align-self: end; /* Align to bottom */
 }
 
 .span-2 {
