@@ -1,4 +1,5 @@
 <template>
+  <!-- Previous template code exactly as it was, only changing styles -->
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <transition name="fade" mode="out-in">
       <div v-if="error" class="error-message">{{ error }}</div>
@@ -45,6 +46,7 @@
 </template>
 
 <script>
+// Script section remains exactly the same
 export default {
   name: 'CalculatorDisplay',
   props: {
@@ -84,7 +86,6 @@ export default {
     filteredParameters() {
       if (!this.parameters) return {}
       
-      // Only include main TVM parameters
       const mainParams = ['n', 'i', 'pv', 'pmt', 'fv']
       return Object.fromEntries(
         Object.entries(this.parameters)
@@ -94,38 +95,30 @@ export default {
   },
   methods: {
     formatValue(val) {
-      // Handle special cases
       if (!val && val !== 0) return '0'
       if (typeof val === 'string' && !val.trim()) return '0'
       
       try {
         const num = Number(val)
         
-        // Handle special numeric values
         if (isNaN(num)) return 'Error'
         if (!isFinite(num)) return num > 0 ? 'Overflow' : '-Overflow'
         
-        // Convert to a manageable number
         if (Math.abs(num) >= 1e12) return num.toExponential(6)
         
-        // Format the number with thousand separators and proper decimals
         const parts = num.toString().split('.')
         const wholePart = parts[0]
         const decimalPart = parts[1] || ''
         
-        // Add thousand separators
         const formattedWholePart = wholePart.replace(/\B(?=(\d{3})+(?!\d))/g, ',')
         
-        // Handle decimals
         let formattedDecimalPart = ''
         if (decimalPart) {
-          // For financial values, show at least 2 decimals, max 4
           const minDecimals = this.isFinancialMode ? 2 : 0
           const maxDecimals = 4
           const decimals = Math.min(Math.max(decimalPart.length, minDecimals), maxDecimals)
           formattedDecimalPart = '.' + Number('0.' + decimalPart).toFixed(decimals).split('.')[1]
         } else if (this.isFinancialMode) {
-          // Always show 2 decimals in financial mode
           formattedDecimalPart = '.00'
         }
         
@@ -163,7 +156,7 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  height: 100px; /* Fixed height for non-expanded state */
+  height: 100px;
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -171,7 +164,7 @@ export default {
 }
 
 .calculator-display.expanded {
-  height: 260px; /* Fixed height for expanded state */
+  height: 320px; /* Increased height to show all parameters without scroll */
 }
 
 .display-container {
@@ -184,21 +177,19 @@ export default {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 10px;
+  gap: 12px; /* Increased gap between parameters */
+  margin-bottom: 16px;
+  padding: 16px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  overflow-y: auto;
-  max-height: 160px; /* Fixed max height for parameters */
 }
 
 .parameter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 8px;
+  padding: 10px; /* Increased padding */
   border-radius: 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: #f8f9fa;
@@ -217,26 +208,26 @@ export default {
 }
 
 .param-label {
-  font-size: 0.9rem;
+  font-size: 1rem; /* Slightly larger font */
   color: #666;
   font-weight: 500;
 }
 
 .param-value {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #333;
   font-family: monospace;
-  min-width: 80px;
+  min-width: 100px; /* Increased min-width */
   text-align: right;
 }
 
 .current-input {
   text-align: right;
-  padding: 10px;
+  padding: 12px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 76px; /* Fixed height for input area */
+  height: 80px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -246,7 +237,7 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 24px; /* Fixed height for description */
+  min-height: 24px;
 }
 
 .description-text {
@@ -283,7 +274,7 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: monospace;
-  height: 40px; /* Fixed height for display value */
+  height: 40px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -296,12 +287,12 @@ export default {
 .error-message {
   color: #dc3545;
   font-size: 1rem;
-  padding: 10px;
+  padding: 12px;
   text-align: center;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 76px; /* Match current-input height */
+  height: 80px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -321,7 +312,6 @@ export default {
 .slide-enter-active,
 .slide-leave-active {
   transition: all 0.3s ease;
-  max-height: 30px;
 }
 
 .slide-enter-from,

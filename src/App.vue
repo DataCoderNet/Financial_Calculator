@@ -295,7 +295,7 @@ body {
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 320px;
-  height: 600px; /* Fixed height */
+  height: 680px; /* Increased height to accommodate expanded display */
   display: flex;
   flex-direction: column;
   position: sticky;
