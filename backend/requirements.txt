@@ -2,3 +2,6 @@ fastapi>=0.115.8
 uvicorn>=0.34.0
 python-dotenv>=1.0.1
 numpy-financial>=1.0.0
+pytest>=8.0.0
+httpx>=0.26.0
+pytest-cov>=4.1.0
