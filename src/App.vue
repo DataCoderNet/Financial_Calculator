@@ -8,15 +8,7 @@
         :parameters="finParameters"
         :calculated-parameter="calculatedParameter"
         :is-financial-mode="isFinancialMode"
-        :memory-active="!!memoryValue"
       />
-      <!-- Memory buttons row -->
-      <div class="memory-row">
-        <CalculatorButton label="MC" type="memory" @click="memoryClear" />
-        <CalculatorButton label="MR" type="memory" @click="memoryRecall" />
-        <CalculatorButton label="M-" type="memory" @click="memorySubtract" />
-        <CalculatorButton label="M+" type="memory" @click="memoryAdd" />
-      </div>
       <!-- FIN button at the top -->
       <div class="fin-section">
         <FinButtonMenu 
@@ -85,34 +77,10 @@ export default {
       currentParameter: null,
       calculatedParameter: '',
       inputDescription: '',
-      finParameters: null,
-      // Memory state
-      memoryValue: 0
+      finParameters: null
     }
   },
   methods: {
-    // Memory Operations
-    memoryAdd() {
-      const currentValue = parseFloat(this.displayValue)
-      if (!isNaN(currentValue)) {
-        this.memoryValue += currentValue
-      }
-    },
-    memorySubtract() {
-      const currentValue = parseFloat(this.displayValue)
-      if (!isNaN(currentValue)) {
-        this.memoryValue -= currentValue
-      }
-    },
-    memoryRecall() {
-      this.displayValue = String(this.memoryValue)
-      if (this.isFinancialMode && this.currentParameter) {
-        this.$refs.finMenu.assignParameterValue(this.currentParameter, this.displayValue)
-      }
-    },
-    memoryClear() {
-      this.memoryValue = 0
-    },
     handleInput(value) {
       if (this.isFinancialMode) {
         // Always update display value in financial mode
@@ -292,14 +260,6 @@ body {
   width: 320px;
   display: flex;
   flex-direction: column;
-}
-
-.memory-row {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  padding: 8px;
-  margin-bottom: 8px;
 }
 
 .calculator-grid {
