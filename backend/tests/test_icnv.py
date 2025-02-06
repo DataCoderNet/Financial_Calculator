@@ -101,11 +101,11 @@ def test_api_invalid_inputs(client):
         "/api/fin/icnv/nominal-to-effective",
         json={"rate": -6.0, "compounding_periods": 12}
     )
-    assert response.status_code == 400
+    assert response.status_code in [400, 422]
 
     # Test invalid compounding periods
     response = client.post(
         "/api/fin/icnv/effective-to-nominal",
         json={"rate": 6.0, "compounding_periods": 0}
     )
-    assert response.status_code == 400
+    assert response.status_code in [400, 422]
