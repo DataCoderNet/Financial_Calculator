@@ -36,6 +36,14 @@
         @select-parameter="assignToParameter"
         @calculation-request="handleCalculate"
       />
+
+      <!-- ICNV Menu -->
+      <ICNVMenu
+        v-else-if="currentView === 'icnv'"
+        @back="goBack"
+        @select-parameter="assignToParameter"
+        @calculation-request="handleCalculate"
+      />
     </div>
   </div>
 </template>
@@ -43,12 +51,14 @@
 <script>
 import CalculatorButton from './CalculatorButton.vue'
 import TVMMenu from './menus/TVMMenu.vue'
+import ICNVMenu from './menus/ICNVMenu.vue'
 
 export default {
   name: 'FinButtonMenu',
   components: {
     CalculatorButton,
-    TVMMenu
+    TVMMenu,
+    ICNVMenu
   },
   emits: ['assign-value', 'parameter-update', 'calculation-request', 'menu-state'],
   data() {

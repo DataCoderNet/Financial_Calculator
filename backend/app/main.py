@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from typing import Optional
-from .calculations import tvm
+from .calculations import tvm, icnv
 
 app = FastAPI(
     title="Financial Calculator API",
@@ -27,6 +27,10 @@ app.add_middleware(
 )
 
 # Models
+class ICNVInput(BaseModel):
+    rate: float = Field(..., description="Interest rate (as percentage)")
+    compounding_periods: int = Field(..., description="Number of compounding periods per year", ge=1)
+
 class TVMInput(BaseModel):
     n: Optional[float] = Field(None, description="Number of periods")
     i: Optional[float] = Field(None, description="Annual interest rate (as percentage)")
@@ -162,5 +166,30 @@ async def calculate_payment(input_data: TVMInput):
         )
         
         return {"value": pmt}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+# ICNV Endpoints
+@app.post("/api/fin/icnv/nominal-to-effective")
+async def convert_nominal_to_effective(input_data: ICNVInput):
+    """Convert nominal interest rate to effective annual rate"""
+    try:
+        effective_rate = icnv.nominal_to_effective(
+            nominal_rate=input_data.rate,
+            compounding_periods=input_data.compounding_periods
+        )
+        return {"value": effective_rate}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/fin/icnv/effective-to-nominal")
+async def convert_effective_to_nominal(input_data: ICNVInput):
+    """Convert effective annual rate to nominal interest rate"""
+    try:
+        nominal_rate = icnv.effective_to_nominal(
+            effective_rate=input_data.rate,
+            compounding_periods=input_data.compounding_periods
+        )
+        return {"value": nominal_rate}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
