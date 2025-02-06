@@ -184,32 +184,36 @@ export default {
       )
     },
     async calculate() {
-      if (this.currentView !== 'tvm') return null
-
-      // Filter out empty values and prepare parameters
-      const params = Object.entries(this.parameterValues).reduce((acc, [key, value]) => {
-        // Include non-empty values and always include pyr and end
-        if (value !== '' && value !== undefined) {
-          // Apply sign convention and convert to number if needed
-          if (key === 'pv' || key === 'pmt') {
-            acc[key] = -Number(value) // Money paid out is negative
-          } else if (key === 'fv' || key === 'i' || key === 'n') {
-            acc[key] = Number(value)  // Convert to number
-          } else {
-            acc[key] = value  // Keep as is for pyr and end
-          }
-        }
-        return acc
-      }, {})
+      if (!this.currentView) return null
 
       try {
-        const response = await fetch(`http://localhost:8000/api/fin/tvm/${this.currentParameter.key}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(params)
-        })
+        let response;
+        
+        if (this.currentView === 'tvm') {
+          // Filter out empty values and prepare parameters for TVM
+          const params = Object.entries(this.parameterValues).reduce((acc, [key, value]) => {
+            // Include non-empty values and always include pyr and end
+            if (value !== '' && value !== undefined) {
+              // Apply sign convention and convert to number if needed
+              if (key === 'pv' || key === 'pmt') {
+                acc[key] = -Number(value) // Money paid out is negative
+              } else if (key === 'fv' || key === 'i' || key === 'n') {
+                acc[key] = Number(value)  // Convert to number
+              } else {
+                acc[key] = value  // Keep as is for pyr and end
+              }
+            }
+            return acc
+          }, {})
+
+          response = await fetch(`http://localhost:8000/api/fin/tvm/${this.currentParameter.key}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(params)
+          })
+        }
 
         if (!response.ok) {
           throw new Error('Calculation failed')
@@ -217,9 +221,10 @@ export default {
 
         const result = await response.json()
         
-        // Reverse sign convention for display if needed
+        // Handle TVM sign convention
         let displayValue = result.value
-        if (this.currentParameter.key === 'pv' || this.currentParameter.key === 'pmt') {
+        if (this.currentView === 'tvm' &&
+            (this.currentParameter.key === 'pv' || this.currentParameter.key === 'pmt')) {
           displayValue = -displayValue
         }
 

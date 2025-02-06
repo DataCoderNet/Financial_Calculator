@@ -75,18 +75,17 @@ export default {
   },
   computed: {
     canCalculate() {
-      return this.parameters.rate !== '' && 
-             this.parameters.periods !== '' &&
-             this.parameters.conversionType !== ''
+      // Should be able to calculate if we have a rate and periods are selected (which has a default)
+      return this.parameters.rate !== '' && this.parameters.rate !== undefined
     }
   },
   methods: {
     selectParameter(key, label) {
       this.selectedParameter = { key, label }
-      this.$emit('select-parameter', { key, label })
+      this.$emit('select-parameter', { key: 'rate', label: 'Rate%' })
     },
     isActive(param) {
-      return param?.key === 'rate'
+      return this.selectedParameter?.key === param.key
     },
     formatValue(value) {
       if (!value && value !== 0) return '?'
@@ -105,15 +104,20 @@ export default {
       if (!this.canCalculate) return
       
       try {
-        const response = await fetch(`http://localhost:8000/api/fin/icnv/${this.parameters.conversionType}`, {
+        // Parameters need to be in the right format for the API
+        const params = {
+          rate: Number(this.parameters.rate),
+          compounding_periods: Number(this.parameters.periods)
+        }
+
+        // Call the appropriate endpoint based on conversion type
+        const endpoint = this.parameters.conversionType || 'nominal-to-effective'
+        const response = await fetch(`http://localhost:8000/api/fin/icnv/${endpoint}`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify({
-            rate: Number(this.parameters.rate),
-            compounding_periods: Number(this.parameters.periods)
-          })
+          body: JSON.stringify(params)
         })
 
         if (!response.ok) {
@@ -122,10 +126,15 @@ export default {
 
         const result = await response.json()
         
+        // Emit the result with the appropriate parameter label
+        const resultLabel = endpoint === 'nominal-to-effective' ? 'EFF%' : 'NOM%'
         this.$emit('calculation-request', {
           value: result.value,
-          parameter: this.parameters.conversionType === 'nominal-to-effective' ? 'EFF%' : 'NOM%'
+          parameter: resultLabel
         })
+
+        // Reset for next calculation
+        this.selectedParameter = null
       } catch (error) {
         console.error('Failed to convert:', error)
       }
