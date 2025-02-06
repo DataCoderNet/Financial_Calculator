@@ -1,5 +1,5 @@
 <template>
-  <!-- Previous template code exactly as it was, only changing styles -->
+  <!-- Keep template exactly as is, only updating styles -->
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <transition name="fade" mode="out-in">
       <div v-if="error" class="error-message">{{ error }}</div>
@@ -46,7 +46,7 @@
 </template>
 
 <script>
-// Script section remains exactly the same
+// Keep script exactly as is
 export default {
   name: 'CalculatorDisplay',
   props: {
@@ -156,7 +156,7 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  height: 100px;
+  height: 120px; /* Slightly taller base height */
   display: flex;
   flex-direction: column;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -164,35 +164,37 @@ export default {
 }
 
 .calculator-display.expanded {
-  height: 320px; /* Increased height to show all parameters without scroll */
+  height: 380px; /* Much taller expanded height */
 }
 
 .display-container {
   display: flex;
   flex-direction: column;
   height: 100%;
+  gap: 15px; /* Add gap between parameters and input */
 }
 
 .parameters-display {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 12px; /* Increased gap between parameters */
-  margin-bottom: 16px;
-  padding: 16px;
+  gap: 10px;
+  padding: 15px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  min-height: 250px; /* Ensure enough space for parameters */
 }
 
 .parameter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px; /* Increased padding */
+  padding: 12px 15px;
   border-radius: 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   background-color: #f8f9fa;
+  height: 42px; /* Fixed height for parameter rows */
 }
 
 .parameter-row.active {
@@ -208,26 +210,26 @@ export default {
 }
 
 .param-label {
-  font-size: 1rem; /* Slightly larger font */
+  font-size: 1.1rem;
   color: #666;
   font-weight: 500;
 }
 
 .param-value {
-  font-size: 1rem;
+  font-size: 1.1rem;
   color: #333;
   font-family: monospace;
-  min-width: 100px; /* Increased min-width */
+  min-width: 120px;
   text-align: right;
 }
 
 .current-input {
   text-align: right;
-  padding: 12px;
+  padding: 12px 15px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 80px;
+  height: 90px; /* Taller input area */
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -237,11 +239,11 @@ export default {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  min-height: 24px;
+  min-height: 28px; /* Slightly taller description area */
 }
 
 .description-text {
-  font-size: 0.9rem;
+  font-size: 1rem;
   color: #666;
   display: flex;
   align-items: center;
@@ -249,24 +251,24 @@ export default {
 }
 
 .calculated-badge {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   background-color: #4caf50;
   color: white;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
 }
 
 .memory-indicator {
-  font-size: 0.8rem;
+  font-size: 0.85rem;
   background-color: #2196f3;
   color: white;
-  padding: 2px 6px;
+  padding: 3px 8px;
   border-radius: 4px;
   margin-left: auto;
 }
 
 .display-value {
-  font-size: 2rem;
+  font-size: 2.2rem; /* Slightly larger display value */
   font-weight: 500;
   color: #333;
   line-height: 1.2;
@@ -274,31 +276,31 @@ export default {
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: monospace;
-  height: 40px;
+  height: 48px; /* Taller display value area */
   display: flex;
   align-items: center;
   justify-content: flex-end;
 }
 
 .display-value.with-description {
-  font-size: 1.8rem;
+  font-size: 2rem;
 }
 
 .error-message {
   color: #dc3545;
-  font-size: 1rem;
-  padding: 12px;
+  font-size: 1.1rem;
+  padding: 15px;
   text-align: center;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 80px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Transitions */
+/* Keep transitions exactly as they were */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.2s ease;
