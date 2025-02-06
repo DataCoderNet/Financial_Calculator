@@ -10,52 +10,54 @@
         :is-financial-mode="isFinancialMode"
         :memory-active="!!memoryValue"
       />
-      <!-- Memory buttons row -->
-      <div class="memory-row">
-        <CalculatorButton label="MC" type="memory" @click="memoryClear" />
-        <CalculatorButton label="MR" type="memory" @click="memoryRecall" />
-        <CalculatorButton label="M-" type="memory" @click="memorySubtract" />
-        <CalculatorButton label="M+" type="memory" @click="memoryAdd" />
-      </div>
-      <!-- FIN button at the top -->
-      <div class="fin-section">
-        <FinButtonMenu 
-          ref="finMenu" 
-          @assign-value="handleAssignValue"
-          @parameter-update="updateFinParameters"
-          @calculation-request="handleCalculationResult"
-          @menu-state="handleMenuState"
-        />
-      </div>
-      <div class="calculator-grid">
-        <!-- First row -->
-        <CalculatorButton label="C" type="function" @click="clearAll" />
-        <CalculatorButton label="±" type="function" @click="toggleSign" />
-        <CalculatorButton label="%" type="function" @click="percentage" />
-        <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
+      <div class="controls-section">
+        <!-- Memory buttons row -->
+        <div class="memory-row">
+          <CalculatorButton label="MC" type="memory" @click="memoryClear" />
+          <CalculatorButton label="MR" type="memory" @click="memoryRecall" />
+          <CalculatorButton label="M-" type="memory" @click="memorySubtract" />
+          <CalculatorButton label="M+" type="memory" @click="memoryAdd" />
+        </div>
+        <!-- FIN button at the top -->
+        <div class="fin-section">
+          <FinButtonMenu 
+            ref="finMenu" 
+            @assign-value="handleAssignValue"
+            @parameter-update="updateFinParameters"
+            @calculation-request="handleCalculationResult"
+            @menu-state="handleMenuState"
+          />
+        </div>
+        <div class="calculator-grid">
+          <!-- First row -->
+          <CalculatorButton label="C" type="function" @click="clearAll" />
+          <CalculatorButton label="±" type="function" @click="toggleSign" />
+          <CalculatorButton label="%" type="function" @click="percentage" />
+          <CalculatorButton label="÷" type="operator" @click="setOperator('/')" :is-active="operator === '/'" />
 
-        <!-- Second row -->
-        <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
-        <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
-        <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
-        <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
+          <!-- Second row -->
+          <CalculatorButton label="7" type="digit" @click="handleInput('7')" />
+          <CalculatorButton label="8" type="digit" @click="handleInput('8')" />
+          <CalculatorButton label="9" type="digit" @click="handleInput('9')" />
+          <CalculatorButton label="×" type="operator" @click="setOperator('*')" :is-active="operator === '*'" />
 
-        <!-- Third row -->
-        <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
-        <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
-        <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
-        <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
+          <!-- Third row -->
+          <CalculatorButton label="4" type="digit" @click="handleInput('4')" />
+          <CalculatorButton label="5" type="digit" @click="handleInput('5')" />
+          <CalculatorButton label="6" type="digit" @click="handleInput('6')" />
+          <CalculatorButton label="−" type="operator" @click="setOperator('-')" :is-active="operator === '-'" />
 
-        <!-- Fourth row -->
-        <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
-        <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
-        <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
-        <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
+          <!-- Fourth row -->
+          <CalculatorButton label="1" type="digit" @click="handleInput('1')" />
+          <CalculatorButton label="2" type="digit" @click="handleInput('2')" />
+          <CalculatorButton label="3" type="digit" @click="handleInput('3')" />
+          <CalculatorButton label="+" type="operator" @click="setOperator('+')" :is-active="operator === '+'" />
 
-        <!-- Fifth row -->
-        <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
-        <CalculatorButton label="." type="digit" @click="appendDecimal" />
-        <CalculatorButton label="=" type="operator" @click="calculate" />
+          <!-- Fifth row -->
+          <CalculatorButton label="0" type="digit" @click="handleInput('0')" class="span-2" />
+          <CalculatorButton label="." type="digit" @click="appendDecimal" />
+          <CalculatorButton label="=" type="operator" @click="calculate" />
+        </div>
       </div>
     </div>
   </div>
@@ -115,13 +117,10 @@ export default {
     },
     handleInput(value) {
       if (this.isFinancialMode) {
-        // Always update display value in financial mode
         const newValue = this.displayValue === '0' ? value : this.displayValue + value
         this.displayValue = newValue
         return
       }
-
-      // Normal calculator input handling
       this.appendDigit(value)
     },
     clearAll() {
@@ -171,7 +170,6 @@ export default {
     },
     setOperator(nextOperator) {
       if (this.isFinancialMode) {
-        // In financial mode, + and - are used for sign changes
         if (nextOperator === '+' || nextOperator === '-') {
           this.toggleSign()
         }
@@ -219,7 +217,6 @@ export default {
           return current
       }
       
-      // Format the result to prevent floating point issues
       result = parseFloat(result.toFixed(10))
       return Number.isFinite(result) ? result : current
     },
@@ -235,7 +232,6 @@ export default {
       this.waitingForSecondOperand = false
     },
     handleAssignValue(param) {
-      // Assign the current display value to the selected parameter
       this.isFinancialMode = true
       this.$refs.finMenu.assignParameterValue(param, this.displayValue)
       this.displayValue = '0'  // Reset display for next input
@@ -253,7 +249,6 @@ export default {
       }
     },
     handleMenuState(isOpen) {
-      // Update financial mode based on menu state
       this.isFinancialMode = isOpen
       if (!isOpen) {
         this.calculatedParameter = ''
@@ -295,12 +290,19 @@ body {
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 320px;
-  min-height: 740px;
-  display: grid;
-  grid-template-rows: auto auto auto auto; /* Fixed layout: display, memory, fin, calculator grid */
-  gap: 12px;
+  display: flex;
+  flex-direction: column;
   position: sticky;
   top: 2rem;
+  gap: 12px;
+}
+
+/* Controls section - everything except display */
+.controls-section {
+  display: grid;
+  grid-template-rows: 50px 40px 300px; /* Fixed heights: memory, fin, calculator grid */
+  gap: 12px;
+  margin-top: 12px;
 }
 
 .memory-row {
@@ -310,22 +312,21 @@ body {
   padding: 8px;
 }
 
+.fin-section {
+  display: flex;
+  justify-content: flex-start;
+  padding: 0 8px;
+}
+
 .calculator-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   grid-template-rows: repeat(5, 1fr);
   gap: 8px;
   padding: 8px;
-  height: 300px; /* Fixed height */
-  align-self: end; /* Align to bottom */
 }
 
 .span-2 {
   grid-column: span 2;
-}
-
-.fin-section {
-  display: flex;
-  justify-content: flex-start;
 }
 </style>
