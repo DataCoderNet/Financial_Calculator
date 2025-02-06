@@ -66,15 +66,7 @@ export default {
       isMenuOpen: false,
       currentView: 'main',
       currentParameter: null,
-      parameterValues: {
-        n: '',
-        i: '',
-        pv: '',
-        pmt: '',
-        fv: '',
-        pyr: '12',
-        end: true
-      },
+      parameterValues: {},
       categories: [
         { key: 'tvm', label: 'TVM', description: 'Time Value of Money' },
         { key: 'icnv', label: 'ICNV', description: 'Interest Conversion' },
@@ -104,21 +96,45 @@ export default {
     resetState() {
       this.currentView = 'main'
       this.currentParameter = null
-      this.parameterValues = {
-        n: '',
-        i: '',
-        pv: '',
-        pmt: '',
-        fv: '',
-        pyr: '12',
-        end: true
+
+      // Reset parameters based on the previous view
+      if (this.currentView === 'tvm') {
+        this.parameterValues = {
+          n: '',
+          i: '',
+          pv: '',
+          pmt: '',
+          fv: '',
+          pyr: '12',
+          end: true
+        }
+      } else if (this.currentView === 'icnv') {
+        this.parameterValues = {
+          rate: '',
+          periods: '12',
+          conversionType: 'nominal-to-effective'
+        }
+      } else {
+        this.parameterValues = {}
       }
+      
       this.$emit('parameter-update', this.parameterValues)
     },
     selectCategory(category) {
+      // Set the current view
       this.currentView = category.key
+      
+      // Reset state when changing categories
+      if (this.currentView === 'icnv') {
+        this.parameterValues = {
+          rate: '',
+          periods: '12',
+          conversionType: 'nominal-to-effective'
+        }
+      }
+      
       this.$emit('parameter-update', this.parameterValues)
-      // Only set financial mode when selecting a specific function
+      // Set financial mode when selecting a specific function
       this.$emit('menu-state', true)
     },
     goBack() {
