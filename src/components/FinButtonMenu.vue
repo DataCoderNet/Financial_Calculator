@@ -9,34 +9,41 @@
     />
 
     <!-- Menu Content -->
-    <div v-if="isMenuOpen" class="menu-content">
-      <!-- Main Categories Menu -->
-      <div v-if="currentView === 'main'" class="main-menu">
-        <div class="menu-header">
-          <h3>Financial Functions</h3>
-          <button class="close-button" @click="closeMenu">&times;</button>
-        </div>
-        <div class="menu-grid">
-          <CalculatorButton
-            v-for="category in categories"
-            :key="category.key"
-            :label="category.label"
-            type="fin"
-            @click="selectCategory(category)"
-          />
-        </div>
-      </div>
+    <transition name="menu">
+      <div v-if="isMenuOpen" class="menu-content">
+        <!-- Main Categories Menu -->
+        <transition name="fade" mode="out-in">
+          <div v-if="currentView === 'main'" class="main-menu" key="main">
+            <div class="menu-header">
+              <h3>Financial Functions</h3>
+              <button class="close-button" @click="closeMenu">&times;</button>
+            </div>
+            <div class="menu-grid">
+              <transition-group name="category">
+                <CalculatorButton
+                  v-for="category in categories"
+                  :key="category.key"
+                  :label="category.label"
+                  type="fin"
+                  @click="selectCategory(category)"
+                />
+              </transition-group>
+            </div>
+          </div>
 
-      <!-- TVM Menu -->
-      <TVMMenu
-        v-else-if="currentView === 'tvm'"
-        :current-parameter="currentParameter"
-        :parameter-values="parameterValues"
-        @back="goBack"
-        @select-parameter="assignToParameter"
-        @calculation-request="handleCalculate"
-      />
-    </div>
+          <!-- TVM Menu -->
+          <TVMMenu
+            v-else-if="currentView === 'tvm'"
+            key="tvm"
+            :current-parameter="currentParameter"
+            :parameter-values="parameterValues"
+            @back="goBack"
+            @select-parameter="assignToParameter"
+            @calculation-request="handleCalculate"
+          />
+        </transition>
+      </div>
+    </transition>
   </div>
 </template>
 
@@ -81,7 +88,6 @@ export default {
       if (!this.isMenuOpen) {
         this.resetState()
       }
-      // Don't set financial mode when just opening the menu
       if (!this.isMenuOpen) {
         this.$emit('menu-state', false)
       }
@@ -108,12 +114,10 @@ export default {
     selectCategory(category) {
       this.currentView = category.key
       this.$emit('parameter-update', this.parameterValues)
-      // Only set financial mode when selecting a specific function
       this.$emit('menu-state', true)
     },
     goBack() {
       this.currentView = 'main'
-      // Return to normal display when going back to main menu
       this.$emit('menu-state', false)
     },
     assignToParameter(param) {
@@ -124,7 +128,6 @@ export default {
       this.$emit('parameter-update', this.parameterValues)
     },
     async handleCalculate() {
-      // Find which parameter is missing
       const missingParam = this.findMissingParameter()
       if (!missingParam) return
 
@@ -136,10 +139,8 @@ export default {
       try {
         const result = await this.calculate()
         if (result) {
-          // Update the UI with the calculated result
           this.parameterValues[result.parameter] = String(result.value)
           this.$emit('parameter-update', this.parameterValues)
-          // Trigger calculation completion
           this.$emit('calculation-request', result)
         }
       } catch (error) {
@@ -160,15 +161,12 @@ export default {
       const params = this.parameterValues
       const requiredParams = ['n', 'i', 'pv', 'pmt', 'fv']
       
-      // Count filled parameters
       const filledParams = requiredParams.filter(param => 
         params[param] !== '' && params[param] !== undefined
       ).length
 
-      // We need exactly 4 parameters filled to calculate the 5th
       if (filledParams !== 4) return null
 
-      // Return the empty parameter
       return requiredParams.find(param => 
         !params[param] || params[param] === ''
       )
@@ -176,17 +174,14 @@ export default {
     async calculate() {
       if (this.currentView !== 'tvm') return null
 
-      // Filter out empty values and prepare parameters
       const params = Object.entries(this.parameterValues).reduce((acc, [key, value]) => {
-        // Include non-empty values and always include pyr and end
         if (value !== '' && value !== undefined) {
-          // Apply sign convention and convert to number if needed
           if (key === 'pv' || key === 'pmt') {
-            acc[key] = -Number(value) // Money paid out is negative
+            acc[key] = -Number(value)
           } else if (key === 'fv' || key === 'i' || key === 'n') {
-            acc[key] = Number(value)  // Convert to number
+            acc[key] = Number(value)
           } else {
-            acc[key] = value  // Keep as is for pyr and end
+            acc[key] = value
           }
         }
         return acc
@@ -207,7 +202,6 @@ export default {
 
         const result = await response.json()
         
-        // Reverse sign convention for display if needed
         let displayValue = result.value
         if (this.currentParameter.key === 'pv' || this.currentParameter.key === 'pmt') {
           displayValue = -displayValue
@@ -235,49 +229,126 @@ export default {
 
 .menu-content {
   position: fixed;
-  top: 50%; /* Center vertically */
-  right: calc(50% - 160px); /* Center calculator width (320/2) */
-  margin-right: -360px; /* Position to the right of calculator */
-  transform: translateY(-50%); /* Adjust for vertical centering */
+  top: 50%;
+  right: calc(50% - 160px);
+  margin-right: -360px;
+  transform: translateY(-50%);
   background-color: #ffffff;
-  border-radius: 8px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
   min-width: 280px;
   max-height: 80vh;
   overflow-y: auto;
+  padding: 0;
+  backdrop-filter: blur(10px);
+}
+
+.main-menu {
+  overflow: hidden;
 }
 
 .menu-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 10px 15px;
-  border-bottom: 1px solid #eee;
+  padding: 16px 20px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  border-radius: 12px 12px 0 0;
 }
 
 .menu-header h3 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #333;
+  font-size: 1.2rem;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .close-button {
   background: none;
   border: none;
   font-size: 1.5rem;
-  color: #666;
+  color: #6c757d;
   cursor: pointer;
-  padding: 0 5px;
+  padding: 8px;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .close-button:hover {
-  color: #333;
+  color: #2c3e50;
+  background-color: rgba(0, 0, 0, 0.05);
 }
 
 .menu-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 8px;
-  padding: 10px;
+  gap: 12px;
+  padding: 16px;
+}
+
+/* Transitions */
+.menu-enter-active,
+.menu-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.menu-enter-from {
+  opacity: 0;
+  transform: translate(20px, -50%);
+}
+
+.menu-leave-to {
+  opacity: 0;
+  transform: translate(-20px, -50%);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.category-enter-active,
+.category-leave-active {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.category-enter-from {
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.category-leave-to {
+  opacity: 0;
+  transform: translateY(-20px);
+}
+
+/* Scrollbar styling */
+.menu-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu-content::-webkit-scrollbar-track {
+  background: #f8f9fa;
+  border-radius: 4px;
+}
+
+.menu-content::-webkit-scrollbar-thumb {
+  background-color: #ced4da;
+  border-radius: 4px;
+}
+
+.menu-content::-webkit-scrollbar-thumb:hover {
+  background-color: #adb5bd;
 }
 </style>
