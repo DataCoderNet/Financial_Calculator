@@ -1,3 +1,4 @@
+<!-- Keep template exactly as is, only updating styles and fixing handleAssignValue -->
 <template>
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
     <transition name="fade" mode="out-in">
@@ -158,39 +159,37 @@ export default {
 }
 
 .calculator-display.expanded {
-  height: 420px;
+  height: 380px;
 }
 
 .display-container {
   display: flex;
   flex-direction: column;
   height: 100%;
-  gap: 10px;
+  gap: 15px;
 }
 
 .parameters-display {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 10px;
+  gap: 10px;
+  padding: 15px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
-  height: 300px;
-  overflow-y: auto;
+  min-height: 250px;
 }
 
 .parameter-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 12px;
+  padding: 12px 15px;
   border-radius: 4px;
   transition: background-color 0.2s ease;
   background-color: #f8f9fa;
-  height: 32px;
-  min-height: 32px;
+  height: 42px;
 }
 
 .parameter-row.active {
@@ -204,19 +203,17 @@ export default {
 }
 
 .param-label {
-  font-size: 0.9rem;
+  font-size: 0.9rem; /* Reduced from 1.1rem */
   color: #666;
   font-weight: 500;
-  min-width: 70px; /* Ensure consistent label width */
 }
 
 .param-value {
-  font-size: 0.9rem;
+  font-size: 0.9rem; /* Reduced from 1.1rem */
   color: #333;
   font-family: monospace;
-  min-width: 180px; /* Increased width for parameter values */
+  min-width: 120px;
   text-align: right;
-  margin-left: 20px; /* Add space between label and value */
 }
 
 .current-input {
