@@ -282,6 +282,11 @@ body {
   position: relative;
   width: fit-content;
   margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding-top: 2rem;
 }
 
 .calculator {
@@ -290,8 +295,11 @@ body {
   padding: 20px;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   width: 320px;
+  height: 600px; /* Fixed height */
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 2rem;
 }
 
 .memory-row {
@@ -307,6 +315,7 @@ body {
   grid-template-columns: repeat(4, 1fr);
   gap: 8px;
   padding: 8px;
+  flex: 1;
 }
 
 .span-2 {

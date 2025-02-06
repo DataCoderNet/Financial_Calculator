@@ -1,6 +1,6 @@
 <template>
   <div class="calculator-display" :class="{ 'expanded': isFinancialMode }">
-    <transition name="fade">
+    <transition name="fade" mode="out-in">
       <div v-if="error" class="error-message">{{ error }}</div>
       <div v-else key="display" class="display-container">
         <!-- TVM Parameters display -->
@@ -15,7 +15,7 @@
             }"
           >
             <span class="param-label">{{ formatLabel(key) }}:</span>
-            <transition name="number">
+            <transition name="number" mode="out-in">
               <span class="param-value" :key="value">{{ formatValue(value) }}</span>
             </transition>
           </div>
@@ -23,7 +23,7 @@
         <!-- Current input display -->
         <div class="current-input">
           <div class="input-description">
-            <div v-if="description">
+            <div v-if="description" class="description-text">
               {{ description }}
               <transition name="fade">
                 <span v-if="isCalculatedValue" class="calculated-badge">Calculated</span>
@@ -33,7 +33,7 @@
               <div v-if="memoryActive" class="memory-indicator">M</div>
             </transition>
           </div>
-          <transition name="number">
+          <transition name="number" mode="out-in">
             <div class="display-value" :class="{ 'with-description': description }" :key="value">
               {{ formatValue(value) }}
             </div>
@@ -163,14 +163,15 @@ export default {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  min-height: 80px;
+  height: 100px; /* Fixed height for non-expanded state */
   display: flex;
   flex-direction: column;
-  transition: min-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
 }
 
 .calculator-display.expanded {
-  min-height: 200px;
+  height: 260px; /* Fixed height for expanded state */
 }
 
 .display-container {
@@ -180,23 +181,27 @@ export default {
 }
 
 .parameters-display {
-  flex-grow: 1;
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 12px;
   padding: 10px;
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  overflow-y: auto;
+  max-height: 160px; /* Fixed max height for parameters */
 }
 
 .parameter-row {
   display: flex;
   justify-content: space-between;
-  padding: 4px 8px;
+  align-items: center;
+  padding: 6px 8px;
   border-radius: 4px;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background-color: #f8f9fa;
 }
 
 .parameter-row.active {
@@ -214,12 +219,15 @@ export default {
 .param-label {
   font-size: 0.9rem;
   color: #666;
+  font-weight: 500;
 }
 
 .param-value {
   font-size: 0.9rem;
   color: #333;
   font-family: monospace;
+  min-width: 80px;
+  text-align: right;
 }
 
 .current-input {
@@ -228,16 +236,25 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  height: 76px; /* Fixed height for input area */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 
 .input-description {
-  font-size: 0.9rem;
-  color: #666;
-  margin-bottom: 4px;
-  text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  min-height: 24px; /* Fixed height for description */
+}
+
+.description-text {
+  font-size: 0.9rem;
+  color: #666;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .calculated-badge {
@@ -246,7 +263,6 @@ export default {
   color: white;
   padding: 2px 6px;
   border-radius: 4px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .memory-indicator {
@@ -256,18 +272,21 @@ export default {
   padding: 2px 6px;
   border-radius: 4px;
   margin-left: auto;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .display-value {
   font-size: 2rem;
   font-weight: 500;
   color: #333;
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-family: monospace;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  height: 40px; /* Fixed height for display value */
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
 }
 
 .display-value.with-description {
@@ -282,12 +301,16 @@ export default {
   background-color: #fff;
   border-radius: 4px;
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.1);
+  height: 76px; /* Match current-input height */
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 /* Transitions */
 .fade-enter-active,
 .fade-leave-active {
-  transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: opacity 0.2s ease;
 }
 
 .fade-enter-from,
@@ -297,7 +320,8 @@ export default {
 
 .slide-enter-active,
 .slide-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
+  max-height: 30px;
 }
 
 .slide-enter-from,
@@ -308,16 +332,16 @@ export default {
 
 .number-enter-active,
 .number-leave-active {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.2s ease;
 }
 
 .number-enter-from {
-  transform: translateY(-20px);
+  transform: translateY(-10px);
   opacity: 0;
 }
 
 .number-leave-to {
-  transform: translateY(20px);
+  transform: translateY(10px);
   opacity: 0;
 }
 </style>
