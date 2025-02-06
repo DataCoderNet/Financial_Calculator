@@ -22,9 +22,12 @@
       </div>
       <!-- Current input display -->
       <div class="current-input">
-        <div v-if="description" class="input-description">
-          {{ description }}
-          <span v-if="isCalculatedValue" class="calculated-badge">Calculated</span>
+        <div class="input-description">
+          <div v-if="description">
+            {{ description }}
+            <span v-if="isCalculatedValue" class="calculated-badge">Calculated</span>
+          </div>
+          <div v-if="memoryActive" class="memory-indicator">M</div>
         </div>
         <div class="display-value" :class="{ 'with-description': description }">
           {{ formatValue(value) }}
@@ -59,6 +62,10 @@ export default {
       default: ''
     },
     isFinancialMode: {
+      type: Boolean,
+      default: false
+    },
+    memoryActive: {
       type: Boolean,
       default: false
     }
@@ -197,6 +204,15 @@ export default {
   color: white;
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.memory-indicator {
+  font-size: 0.8rem;
+  background-color: #2196f3;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: auto;
 }
 
 .display-value {
